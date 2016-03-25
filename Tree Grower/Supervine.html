@@ -1,0 +1,1005 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<script src="../Utilities/ParticleEffectComponant.js"></script>
+	<image id="waterDrop" src="waterDrop.png" hidden />
+	<image id="poisonDrop" src="poisonDrop.png" hidden />
+	<image id="sunbeam" src="sunbeam.png" hidden />
+	<image id="seedPod" src="seedPod.png" hidden />
+	<image id="plantseg" src="plantseg.png" hidden />
+	<image id="background" src="background0000.jpg" hidden />
+	<p><a href="../../games.php">back to games</a></p>
+	
+  </head>
+  <body>
+  <div style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; text-align:center;"><h1>SUPER VINE!</h1></div>
+    <canvas id="myCanvas" width="800" height="600" style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;"></canvas>
+    <script>
+	//Get canvas and 2d context
+    var canvas = document.getElementById('myCanvas');
+    var canvasContext = canvas.getContext('2d');
+	
+	const FRAMES_PER_SECOND = 60;
+	const SECOND_IN_MILISECONDS = 1000;
+	
+	var mouseClicked = false;
+	var mouseX;
+	var gameOver = false;
+	var timeElapsed = 0;
+	var timeElapsedFoodSpawn = 0;
+	var timeElapsedPlantDecay = 0;
+	var segmentCounter = 0;
+	var fallingObjects = new Array();
+	var fallRate = 1;
+	var spawnRate = 30;
+	var segmentSpawnRate = 1;
+	var segmentFallSpeed = 1;
+	var growTimer = 0;
+	var foodScarcity = 60;
+	var playerName = "";
+	var playerPlant;
+	var mainGameLoop; 
+	var particleComponant;
+	var healthBar;
+	var startGame = false;
+	
+	var backgroundStartX;
+	var backgroundStartY;
+	
+	var bonusAmount = 0;
+	var totalBonus =0;
+	var bonusOpacity = 0;
+	
+	var healthBarObj = function()
+	{
+		this.width = 0;
+		this.height = 0;
+		this.value = 0;
+		this.colour = "rgba(255,255,255,1)";
+		
+		this.draw = function()
+		{
+			drawRect(-20,555,this.width,this.height,this.colour);
+			
+		}
+		this.update = function(playerHealth)
+		{
+			//translate playerhealth to width
+			this.value = playerHealth * 5;
+				
+			this.width = this.value;
+		}
+		
+		
+	
+	}
+	var foodPiece = function()
+	{
+		this.color = '#0000FF';
+		this.size = 0;
+		this.posX = 0;
+		this.posY = 0;
+		this.ID = 'food';
+		this.particleTail;
+		
+		
+		this.spawnTail = function()
+		{
+			if(this.particleTail === undefined)
+			{
+			
+				particleComponant.createParticleEffect(255,255,0, 
+						500, FRAMES_PER_SECOND,this.size/8,
+						25,this.posX ,this.posY ,64,1,"trail",10);
+				this.particleTail = particleComponant.particleEffects[particleComponant.particleEffects.length -1];
+			}
+			
+		
+		}
+		this.updateTail = function()
+		{
+		
+			this.particleTail.startX = this.posX ;
+			this.particleTail.startY = this.posY ;
+		
+		}
+		this.killTail = function()
+		{
+			this.particleTail.killFlag = true;
+		
+		}
+		
+		
+		
+		//wish list feature
+		//types are:
+		//normal, growth burst, branch spawner
+		this.type = 'normal';
+		
+		
+		
+	
+	}
+	var poisonPiece = function()
+	{
+		this.color = '#FF0000';
+		this.size = 0;
+		this.posX = 0;
+		this.posY = 0;
+		this.ID = 'poison';
+		this.type = 'poison';
+		
+	
+	
+	}
+	var plantSegment = function()
+	{
+		//radius of the segment 
+		this.segmentColor = 'rgba(110,193,23,1)';
+		this.size = 0;
+		this.posX = 0;
+		this.posY = 0;
+	};
+	//objects
+	var plant = function()
+	{
+		this.segmentArray = new Array();
+		this.branchSegArray = new Array();
+		this.headSize = 50;
+		this.segmentColor = '#006600';
+		this.headPosX = canvas.width/2;
+		this.headPosY = canvas.width/2;
+		this.headSpeed = 3;
+		this.decayRate = 0.5;
+		
+		
+		
+		this.move = function(mouseX)
+		{
+			
+			if(mouseX > this.headPosX)
+			{
+				this.headPosX += this.headSpeed;
+			
+			}
+			else if (mouseX < this.headPosX)
+			{
+				this.headPosX -= this.headSpeed;
+			}
+		
+		};
+		
+		this.spawnSegment = function()
+		{	
+			//create a temporary segment
+			var segment = new plantSegment();
+			//place the segment where the head is
+			segment.posX = this.headPosX;
+			segment.posY = this.headPosY;
+			segment.size = this.headSize;
+			//push segment onto array
+			this.segmentArray.push(segment);
+		
+		};
+		
+		this.branch = function(size, i)
+		{
+			if((this.headSize - i) > 0)
+			{
+				var roundedSize = Math.ceil(size);
+				//the number of segments is based on the size of the pickup
+				var segmentOne; 
+				var segmentTwo;
+				
+				//NOTE: Calculate for an upward curve 
+				//spawn two branches on either side of the head 
+				//create a temporary segment
+				segmentOne = new plantSegment();
+				segmentTwo = new plantSegment();
+				//place the segment where the head is
+				segmentOne.posX = this.headPosX +(this.headSize * i) * 0.35;
+				segmentOne.posY =  (Math.pow(i,2) *-0.2+ this.headPosY) + (segmentOne.size*2);
+				
+				//place the segment where the head is
+				segmentTwo.posX = this.headPosX -(this.headSize * i)*0.35;
+				segmentTwo.posY = (Math.pow(i,2) *-0.2 + this.headPosY) + (segmentTwo.size*2);
+			
+				segmentOne.size = (this.headSize - i);
+				segmentTwo.size = (this.headSize - i);
+				//push segment onto array
+				this.branchSegArray.push(segmentOne);
+				this.branchSegArray.push(segmentTwo);
+				
+			}
+		
+		
+			
+			
+			
+			
+		};
+		
+		this.removeSegment = function()
+		{
+			//pop oldest segment
+			this.segmentArray.shift();
+		};
+		
+		this.removeBranchSegment = function()
+		{
+			//pop oldest segment
+			this.branchSegArray.shift();
+		};
+		
+		this.decay = function()
+		{
+			if(this.headSize > 5)
+			{
+				this.headSize -= this.decayRate;
+				return false;
+			}
+			else
+			{
+				this.headSize = 5;
+				return true;
+			}
+		};
+	};
+	
+	
+	
+	
+	
+	canvas.addEventListener('mousemove',function(event){
+	
+		mouseX = calculateMousePosition(event).x;
+	});
+	
+	//listen for a mouse click
+	canvas.addEventListener('mousedown', function(event){
+		
+		mouseClicked = true;
+		//console.log(particleEffects);
+		if(gameOver && startGame)
+		{
+			resetGame();
+		}
+		
+		if(!startGame)
+		{
+			resetGame();
+			startGame = true;
+		}
+		
+	
+	});
+	
+	//listen for a mouse release
+	canvas.addEventListener('mouseup', function(event){
+		
+		mouseClicked = false
+	
+	});
+	
+	window.addEventListener('keydown',function(event){
+			//playerPlant.branch();
+	},false);
+	
+	
+
+	//setCookie("scoreOne","Harrison,7234",60);
+	
+	drawBackground();
+	drawAllText();
+	
+	function resetGame()
+	{
+		
+			
+			backgroundStartY= -5320;
+			healthBar = new healthBarObj();
+			
+			particleComponant = new particleEffectComponant();
+			particleComponant.construct(canvas,canvasContext,FRAMES_PER_SECOND);
+			
+			playerPlant = new plant();
+			healthBar.height = 10;
+			healthBar.width = playerPlant.size*5;
+			mouseClicked = false;
+			gameOver = false;
+			timeElapsed = 0;
+			timeElapsedFoodSpawn = 0;
+			timeElapsedPlantDecay = 0;
+			segmentCounter = 0;
+			fallingObjects = new Array();
+			fallRate = 1;
+			spawnRate = 30;
+			segmentSpawnRate = 1;
+			segmentFallSpeed = 1;
+			growTimer = 0;
+			foodScarcity = 60;
+			drawBackground();
+		
+		
+			mainGameLoop = setInterval(mainLoop,SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+		
+		
+	}
+	function mainLoop()
+	{
+		
+		if(!gameOver)
+		{
+			timeElapsed += 1;
+			timeElapsedFoodSpawn += 1;
+			timeElapsedPlantDecay += 1;
+			spawnObjects();
+			drawEverything();
+			moveEverything();
+			checkCollisions();
+			
+		}
+		else 
+		{
+			displayLeaderboard();
+			clearInterval(mainGameLoop);
+		}
+	}
+	
+	function displayLeaderboard()
+	{
+			
+		//draw game over text
+		drawLargeText("Game Over",300,100,"white");
+		playerName = prompt("What is your name?");
+		var nameObj = function ()
+		{
+			var name = "";
+		    var scorePair = 0;
+			
+		
+		};
+		
+		var scoreObj = function()
+		{
+			var score = 0;
+			var namePair = "";
+		};
+		
+		
+		//check cookies for scores
+		var scoreOne = getCookie("scoreOne");
+		var scoreTwo = getCookie("scoreTwo");
+		var scoreThree = getCookie("scoreThree");
+		
+		var subStrArrayOne;
+		var subStrArrayTwo;
+		var subStrArrayThree;
+		
+		var scorePair1 = new scoreObj();
+		var scorePair2 = new scoreObj();
+		var scorePair3 = new scoreObj();
+		
+		var namePair1 = new nameObj();
+		var namePair2 = new nameObj();
+		var namePair3 = new nameObj();
+		
+		
+		subStrArrayOne = scoreOne.split(",");
+		console.log(subStrArrayOne[0][1]);
+		subStrArrayTwo  = scoreTwo.split(",");
+		subStrArrayThree  = scoreThree.split(",");
+	
+		if(subStrArrayOne[0][0] === undefined)
+		{
+			
+			scorePair1.score = 1000;
+			scorePair1.namePair = "Robert";
+			namePair1.name = scorePair1.namePair;
+			namePair1.scorePair = scorePair1.score;
+		}
+		else
+		{
+			scorePair1.score = subStrArrayOne[1];
+			scorePair1.namePair = subStrArrayOne[0];
+			namePair1.name = scorePair1.namePair;
+			namePair1.scorePair = scorePair1.score;
+			
+		}
+		if( subStrArrayTwo[0][0] === undefined)
+		{
+			scorePair2.score = 2400;
+			scorePair2.namePair = "Gregory";
+			namePair2.name = scorePair2.namePair;
+			namePair2.scorePair = scorePair2.score;
+		}
+		else
+		{
+			
+			scorePair2.score = subStrArrayTwo[1];
+			scorePair2.namePair = subStrArrayTwo[0];
+			namePair2.name = scorePair2.namePair;
+			namePair2.scorePair = scorePair2.score;
+			
+		}
+		if( subStrArrayThree[0][0]  === undefined)
+		{
+			scorePair3.score = 4600;
+			scorePair3.namePair = "Fredrick";
+			namePair3.name = scorePair3.namePair;
+			namePair3.scorePair = scorePair3.score;
+		}
+		else
+		{
+			scorePair3.score = subStrArrayThree[1];
+			scorePair3.namePair = subStrArrayThree[0];
+			namePair3.name = scorePair3.namePair;
+			namePair3.scorePair = scorePair3.score;
+		}
+	
+		
+		var scoreArray = new Array();
+		var nameArray = new Array();
+		
+		scoreArray.push(scorePair1.score);
+		scoreArray.push(scorePair2.score);
+		scoreArray.push(scorePair3.score);
+		
+		nameArray.push(namePair1);
+		nameArray.push(namePair2);
+		nameArray.push(namePair3);
+		
+		scoreArray.sort(function(a, b){return b-a});
+		
+		for(var i = 0; i < nameArray.length; i++)
+		{
+			for(var x = 0; x < scoreArray.length; x++)
+			{
+				if(nameArray[i].scorePair == scoreArray[x])
+				{
+					scoreArray[x] = nameArray[i];
+				}
+			}
+			
+			
+		}
+		
+		if(segmentCounter > scoreArray[0].scorePair)
+		{
+			scoreArray[0].scorePair = segmentCounter;
+			scoreArray[0].name = playerName;
+		}
+		else if(segmentCounter > scoreArray[1].scorePair)
+		{
+			scoreArray[1].scorePair = segmentCounter;
+			scoreArray[1].name = playerName;
+		}
+		else if(segmentCounter > scoreArray[2].scorePair)
+		{
+			scoreArray[2].scorePair = segmentCounter;
+			scoreArray[2].name = playerName;
+		}
+		
+		setCookie("scoreOne", scoreArray[0].name+","+scoreArray[0].scorePair,60);
+		setCookie("scoreTwo", scoreArray[1].name+","+scoreArray[1].scorePair,60);
+		setCookie("scoreThree", scoreArray[2].name+","+scoreArray[2].scorePair,60);
+		
+		
+	
+		//draw player score
+		drawMidText("Your score: " + segmentCounter,275,250,"white");
+		//draw leaderboard
+		drawMidText("Leaderboard",300,300,"white");
+		drawSmallText(scoreArray[0].name + ": " + scoreArray[0].scorePair,335,330,"white");
+		drawSmallText(scoreArray[1].name + ": " + scoreArray[1].scorePair,335,360,"white");
+		drawSmallText(scoreArray[2].name + ": " + scoreArray[2].scorePair,335,390,"white");
+		
+		drawMidText("Click to Restart",300,450,"white");
+	
+	}
+	
+	function spawnObjects()
+	{
+		if(timeElapsedFoodSpawn > spawnRate)
+		{
+			var object;
+			var factor = Math.floor((Math.random() * 100) + 1); 
+			
+			//some sort of mathematical process to decide what type of object
+			if(factor >=foodScarcity)
+			{
+				factor = Math.floor((Math.random() * 100) + 1)
+				object = new foodPiece();
+				object.size = Math.floor((Math.random() * 50) + 1); 
+
+				if(factor > 90 && factor <= 95)
+				{
+					object.type = 'grow';
+					object.color = '#FFFF00';
+					object.size = Math.floor((Math.random() * 30) + 1); 
+					object.spawnTail();
+				}
+				else if(factor > 95 && factor <= 100)
+				{
+					object.type = 'branch';
+					object.color = '#00FF00';
+				}
+			}
+			else
+			{
+				object = new poisonPiece();
+				object.size = Math.floor((Math.random() * 20) + 1); 
+			}
+			object.posX = Math.floor((Math.random() * 800) + 1); 
+			fallingObjects.push(object);
+			timeElapsedFoodSpawn = 0;
+		}
+		
+	
+	}
+	function drawEverything()
+	{
+		drawBackground();
+		drawFoodPieces();
+		drawPlantSegments();
+		drawPlantHead();
+		particleComponant.drawEverything();
+		healthBar.draw();
+		drawAllText();
+	}
+	
+	function drawBackground()
+	{
+		backgroundStartY += fallRate/6;
+		//draw blue background
+		drawRect(0,0,canvas.width,canvas.height,'black');
+		drawImage("background",0,backgroundStartY,800,6120);
+	}
+	function drawPlantSegments()
+	{
+	
+		if(playerPlant.branchSegArray.length > 0)
+		{
+			for(var i = 0; i < playerPlant.branchSegArray.length; i++)
+			{
+				
+				
+				
+				drawCircle(playerPlant.branchSegArray[i].posX,
+				playerPlant.branchSegArray[i].posY,
+				playerPlant.branchSegArray[i].size,
+				playerPlant.branchSegArray[i].segmentColor);
+				
+				
+			}
+		}
+		//draw all of the circles associated with the plant
+		for(var i = 0; i < playerPlant.segmentArray.length; i++)
+		{
+			drawCircle(playerPlant.segmentArray[i].posX,
+			playerPlant.segmentArray[i].posY,
+			playerPlant.segmentArray[i].size,
+			playerPlant.segmentArray[i].segmentColor);
+			
+			/*drawImage("plantseg",playerPlant.segmentArray[i].posX - playerPlant.segmentArray[i].size,
+				playerPlant.segmentArray[i].posY - playerPlant.segmentArray[i].size,
+				playerPlant.segmentArray[i].size * 2,
+				playerPlant.segmentArray[i].size * 2);*/
+		}
+		
+		
+	}
+	function drawPlantHead()
+	{
+		/*
+		drawCircle(playerPlant.headPosX,
+			playerPlant.headPosY,
+			playerPlant.headSize,
+			playerPlant.segmentColor);*/
+			
+			drawImage("plantseg",playerPlant.headPosX - playerPlant.headSize,
+				playerPlant.headPosY - playerPlant.headSize,
+				playerPlant.headSize * 2,
+				playerPlant.headSize * 2);
+	}
+	
+	function drawFoodPieces()
+	{
+		//draw all of the circles associated with the plant
+		for(var i = 0; i < fallingObjects.length; i++)
+		{
+			//drawCircle(fallingObjects[i].posX,
+			//fallingObjects[i].posY,
+			//fallingObjects[i].size,
+			//fallingObjects[i].color);
+			
+			if(fallingObjects[i].type == "normal")
+			{
+				drawImage("waterDrop",fallingObjects[i].posX - fallingObjects[i].size,
+				fallingObjects[i].posY - fallingObjects[i].size,
+				fallingObjects[i].size* 2,
+				fallingObjects[i].size* 2);
+			}
+			else if(fallingObjects[i].type == "poison")
+			{
+				drawImage("poisonDrop",fallingObjects[i].posX - fallingObjects[i].size,
+				fallingObjects[i].posY - fallingObjects[i].size,
+				fallingObjects[i].size* 2,
+				fallingObjects[i].size* 2);
+			}
+			else if(fallingObjects[i].type == "grow")
+			{
+				drawImage("sunbeam",fallingObjects[i].posX- fallingObjects[i].size,
+				fallingObjects[i].posY- fallingObjects[i].size,
+				fallingObjects[i].size* 2,
+				fallingObjects[i].size* 2);
+			}
+			else if(fallingObjects[i].type == "branch")
+			{
+				drawImage("seedPod",fallingObjects[i].posX- fallingObjects[i].size,
+				fallingObjects[i].posY- fallingObjects[i].size,
+				fallingObjects[i].size* 2,
+				fallingObjects[i].size* 2);
+				
+			}
+			else
+			{
+				drawCircle(fallingObjects[i].posX,
+				fallingObjects[i].posY,
+				fallingObjects[i].size,
+				fallingObjects[i].color);
+			}
+		}
+		
+		
+		
+	}
+	
+	function drawAllText()
+	{
+		drawSmallText(segmentCounter,50,50,'white')
+		drawSmallText("+"+bonusAmount,120,50,'rgba(255,255,255,'+bonusOpacity+')');
+		if(bonusOpacity > 0)
+		{
+			bonusOpacity -= 0.01;
+		}
+		else
+		{
+			bonusAmount = 0;
+		}
+		if(!startGame)
+		{
+		drawSmallFillText("Click and hold the mouse in the direction you want to go",100,200,'white');
+		drawSmallFillText("Don't touch the purple ones! Touch the Water to stay alive!",70,250,'white');
+			drawSmallText("Click to Start",300,350,'white')
+		}
+	}
+	function moveEverything()
+	{
+		var growTimerStart = growTimer;
+		if(growTimer > 0)
+		{
+			if(growTimer == growTimerStart)
+			{
+				speedUp();
+			}
+			growTimer--;
+		}
+		else
+		{
+			resetSpeed();
+		}
+		movePlantHead();
+		movePlantBody();
+		moveFoodPieces();
+		particleComponant.updateEverything();
+		healthBar.update(playerPlant.headSize);
+		
+	}
+	
+	function speedUp()
+	{
+		fallRate = 2;
+		headSpeed = 4;
+		segmentSpawnRate = 2;
+		segmentFallSpeed = 2;
+		
+		
+	}
+	function resetSpeed()
+	{
+		fallRate = 1;
+		playerPlant.headSpeed = 3;
+		segmentSpawnRate = 1;
+		segmentFallSpeed = 1;
+	}
+	
+	function movePlantHead()
+	{
+		if(mouseClicked)
+		{
+			//move the plant head side to side based on the x position of the mouse
+			playerPlant.move(mouseX);
+			playerPlant.decayRate = 1.2;
+			healthBar.colour = "rgba(255,189,180,1)";
+		}
+		else
+		{
+			playerPlant.decayRate = 0.3;
+			healthBar.colour = "rgba(255,255,255,1)";
+		}
+		//somewhere in the move call we'll spawn a segment every x amount of time
+		if(timeElapsed > segmentSpawnRate)
+		{
+			playerPlant.spawnSegment();
+			segmentCounter++;
+			timeElapsed = 0;
+			
+			if(((segmentCounter - totalBonus)%1480) == 0)
+			{
+				spawnRate -= 5;
+				foodScarcity += 5;
+			}
+			
+		}
+		
+		if(timeElapsedPlantDecay > 20)
+		{
+			if(playerPlant.decay())
+			{
+				//game over
+				gameOver = true;
+		
+			}
+			timeElapsedPlantDecay = 0;
+		}
+		
+		
+	}
+	function movePlantBody()
+	{
+		//NOTE: perhaps make movement cost life 
+		//plant body parts fall offscreen
+		for(var i = 0; i < playerPlant.segmentArray.length; i++)
+		{
+			playerPlant.segmentArray[i].posY += segmentFallSpeed;
+			//if they completely dissapear off screen, remove from array
+			if(playerPlant.segmentArray[i].posY > (canvas.height + playerPlant.segmentArray[i].size*2))
+			{
+				playerPlant.removeSegment();
+			}
+		}
+		
+		if(playerPlant.branchSegArray.length > 0)
+		{
+		
+			for(var i = 0; i < playerPlant.branchSegArray.length; i++)
+			{
+				playerPlant.branchSegArray[i].posY += segmentFallSpeed;
+				//if they completely dissapear off screen, remove from array
+				if(playerPlant.branchSegArray[i].posY > (canvas.height + playerPlant.branchSegArray[i].size*2))
+				{
+					playerPlant.removeBranchSegment();
+				}
+			}
+		}
+		
+		
+	
+	}
+	function moveFoodPieces()
+	{
+		//draw the food pieces
+		for(var i = 0; i < fallingObjects.length; i++)
+		{
+			fallingObjects[i].posY += fallRate;
+			if(fallingObjects[i].type == "grow")
+			{
+				fallingObjects[i].updateTail();
+			}
+			
+		}
+	}
+	
+	
+	function checkCollisions()
+	{
+		for(var i = 0; i < fallingObjects.length; i++)
+		{
+			if(fallingObjects[i].posY > (canvas.height + fallingObjects[i].size*2))
+			{
+				//if an object leaves the stage, remove it.
+				if(fallingObjects[i].type == "grow")
+				{
+					fallingObjects[i].particleTail.killFlag = true;
+				
+				}
+				fallingObjects.splice(i,1);
+				
+				
+			}
+			
+			var dx = fallingObjects[i].posX - playerPlant.headPosX;
+			var dy = fallingObjects[i].posY - playerPlant.headPosY;
+			var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+			if(dis < (fallingObjects[i].size + playerPlant.headSize))
+			{
+				
+				console.log("collision");
+				
+				//delete the object and absorb its value 
+				if(fallingObjects[i].ID == 'poison')
+				{
+					if((playerPlant.headSize - fallingObjects[i].size) < 0)
+					{
+						playerPlant.headSize = 0;
+					}
+					else
+					{
+						playerPlant.headSize -= fallingObjects[i].size;
+					}
+					particleComponant.createParticleEffect(81,30,39, 
+						1, FRAMES_PER_SECOND,fallingObjects[i].size/6,
+						25,playerPlant.headPosX,playerPlant.headPosY,64,3,"trail",5);
+				}
+				else
+				{
+				
+					/* function(colorRed,colorGreen,colorBlue, 
+					duration, framesPerSecond,particleSize,
+					maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)*/
+					
+					
+					playerPlant.headSize += fallingObjects[i].size * 0.1;
+					if(fallingObjects[i].type == 'grow')
+					{
+						//speeds up your growth
+						growTimer += Math.ceil(fallingObjects[i].size) * 10;
+						fallingObjects[i].killTail();
+						particleComponant.createParticleEffect(255,255,0, 
+						1, FRAMES_PER_SECOND,fallingObjects[i].size/6,
+						25,fallingObjects[i].posX,fallingObjects[i].posY,64,3,"burst",0);
+						
+					}
+					else if(fallingObjects[i].type == 'branch')
+					{
+						//causes branches to spring out from the vine adding a bonus to your score
+						//playerPlant.branch(fallingObjects[i].size);
+						particleComponant.createParticleEffect(0,255,0, 
+						1, FRAMES_PER_SECOND,playerPlant.headSize/6,
+						25,playerPlant.headPosX + playerPlant.headSize,playerPlant.headPosY,64,3,"burst",0);
+						particleComponant.createParticleEffect(0,255,0, 
+						1, FRAMES_PER_SECOND,playerPlant.headSize/6,
+						25,playerPlant.headPosX - playerPlant.headSize,playerPlant.headPosY,64,3,"burst",0);
+						var counter = 0;
+						//NOTE: I might want to rewrite this to take place within a interval 
+						// so the branching animates. 
+						var branchAnimation  = setInterval(function(fallingObjs)
+						{
+							
+							playerPlant.branch(fallingObjs.size,counter)
+							
+							if(counter > fallingObjs.size/2 )
+							{
+								clearInterval(branchAnimation);
+							}
+							counter++;
+						}, 10,fallingObjects[i]);
+						
+						//add the score bonus
+						segmentCounter += fallingObjects[i].size * 2;
+						bonusAmount = fallingObjects[i].size * 2;
+						bonusOpacity = 1;
+						totalBonus += bonusAmount;
+						//i should also display the score bonus under the score 
+						//im thinking that it should pop up then slowly fade 
+						
+					}
+					else
+					{
+					
+						particleComponant.createParticleEffect(2,140,218, 
+						1, FRAMES_PER_SECOND,fallingObjects[i].size/6,
+						25,fallingObjects[i].posX,fallingObjects[i].posY,64,3,"burst",0);
+					
+					}
+				}
+				
+				fallingObjects.splice(i, 1); 
+			
+			}
+		
+		}
+	
+	
+	}
+	
+	function drawRect(leftX, topY, width, height, drawColor)
+	{
+		canvasContext.fillStyle = drawColor;
+		canvasContext.fillRect(leftX,topY,width,height);
+	}
+	
+	
+	function drawCircle(leftX, topY, diameter,drawColor)
+	{
+		canvasContext.fillStyle = drawColor;
+		canvasContext.beginPath();
+		
+		//draw arc
+		canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+		canvasContext.fill();
+	
+	}
+	function drawLargeText(text,textX,textY,drawColor)
+	{
+		canvasContext.strokeStyle = drawColor;
+		canvasContext.font = "50px Arial";
+		canvasContext.strokeText(text,textX,textY);
+	}
+	function drawMidText(text,textX,textY,drawColor)
+	{
+		canvasContext.strokeStyle = drawColor;
+		canvasContext.font = "45px Arial";
+		canvasContext.strokeText(text,textX,textY);
+	}
+	function drawSmallText(text,textX,textY,drawColor)
+	{
+		canvasContext.strokeStyle = drawColor;
+		canvasContext.font = "25px Arial";
+		canvasContext.strokeText(text,textX,textY);
+	}
+	function drawSmallFillText(text,textX,textY,drawColor)
+	{
+		canvasContext.fillStyle = drawColor;
+		canvasContext.font = "25px Arial";
+		canvasContext.fillText(text,textX,textY);
+	}
+	function drawImage(imageID,imageX,imageY,width,height)
+	{
+		var img = document.getElementById(imageID);
+		canvasContext.drawImage(img,imageX,imageY,width,height);
+	}
+	function calculateMousePosition(evt)
+	{
+	
+		var rect = canvas.getBoundingClientRect();
+		var root = document.documentElement;
+		var mouseX = evt.clientX- rect.left - root.scrollLeft;
+		return {
+			x:mouseX
+		}
+	}
+	function setCookie(cname, cvalue, exdays) 
+	{
+		var d = new Date();
+		d.setTime(d.getTime() + (exdays*24*60*60*1000));
+		var expires = "expires="+d.toUTCString();
+		document.cookie = cname + "=" + cvalue + "; " + expires;
+	} 
+	function getCookie(cname) 
+	{
+		var name = cname + "=";
+		var ca = document.cookie.split(';');
+		for(var i=0; i<ca.length; i++) 
+		{
+			var c = ca[i];
+			while (c.charAt(0)==' ') c = c.substring(1);
+			if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
+		}
+		return "";
+	} 
+	
+    </script>
+	
+	
+  </body>
+</html>      

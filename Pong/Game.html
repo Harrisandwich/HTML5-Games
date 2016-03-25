@@ -1,0 +1,336 @@
+<html>
+	<img id="ballSprite" style="animation: 2s ease-in-out 0s alternate none infinite running demo-rotate;" src="ball.png" hidden />
+	<img id="background" src="background.jpg" hidden />
+	<img id="paddle" src="paddle.png" hidden />
+	<img id="paddle2" src="paddle2.png" hidden />
+	<canvas id="gameCanvas" width="800" height="600">
+	</canvas>
+	<script>
+		
+		//Canvas 
+		var canvas;
+		var canvasContext;
+		
+		//Constants
+		const SECOND_IN_MILISECONDS = 1000;
+		
+		//Paddle Dimensions
+		const PADDLE_WIDTH = 10;
+		const PADDLE_HEIGHT = 100;
+		
+		const BALL_RADIUS = 10;
+		
+		const BALL_START_X = 400;
+		const BALL_START_Y = 300;
+		const BALL_START_SPEED = 5;
+		
+		//winning score
+		const WINNING_SCORE = 3;
+		
+		//See on load for values. 
+		//While these are technically constants, they get their
+	    //values from the canvas, which is defined on load
+		var CANVAS_WIDTH;
+		var CANVAS_HEIGHT;
+		
+		//Ball dimensions
+		var ballX = BALL_START_X;
+		var ballY = BALL_START_Y;
+		
+		//ball Sprite
+		var ballSpriteX = BALL_START_X - BALL_RADIUS;
+		var ballSpriteY = BALL_START_Y - BALL_RADIUS;
+		
+		var ballDiameter = BALL_RADIUS*2
+		
+		var ballSpeedX;
+		var ballSpeedY;
+	
+		var playerOneScore = 0;
+		var playerTwoScore = 0;
+		
+		var playerOneScoreX = 100;
+		var playerOneScoreY = 100;
+		var playerTwoScoreX = 700;
+		var playerTwoScoreY = 100;
+		
+		var paddleOneX;
+		var paddleOneY;
+		
+		var paddleTwoX;
+		var paddleTwoY;
+		
+		var mouseY;
+		
+		var gameOver;
+		var gameOverText;
+		
+		function calculateMousePosition(evt)
+		{
+		
+			var rect = canvas.getBoundingClientRect();
+			var root = document.documentElement;
+			var mouseY = evt.clientY - rect.left - root.scrollLeft;
+			return {
+				y:mouseY
+			}
+		}
+		
+		//On load function
+		window.onload = function() 
+		{
+			canvas = document.getElementById('gameCanvas');
+			canvasContext = canvas.getContext('2d');
+			
+			CANVAS_WIDTH = canvas.width;
+			CANVAS_HEIGHT = canvas.height;
+			
+			paddleOneX = 0;
+			paddleOneY = (CANVAS_HEIGHT/2) - (PADDLE_HEIGHT/2);
+			console.log(paddleOneY);
+			paddleTwoX = CANVAS_WIDTH - PADDLE_WIDTH;
+			paddleTwoY = (CANVAS_HEIGHT/2) - (PADDLE_HEIGHT/2);
+			
+			gameOver = false;
+			
+			ballSpeedX = BALL_START_SPEED;
+			ballSpeedY = BALL_START_SPEED;
+			var framesPerSecond = 30;
+			//Game loop
+			setInterval(mainLoop, SECOND_IN_MILISECONDS/framesPerSecond)
+			
+			canvas.addEventListener('mousemove',function(event){
+				var mousePos = calculateMousePosition(event);
+				paddleOneY = mousePos.y;
+				
+				
+			});
+			canvas.addEventListener('mousedown',function(event){
+			
+				if(gameOver)
+				{
+					gameOver = false;
+				}
+			});
+			window.addEventListener('keydown',doKeyDown,true);
+		}
+		
+		function doKeyDown(event)
+		{
+			
+			console.log(event.keyCode);
+		}
+		
+		function mainLoop()
+		{	
+			moveEverything();
+			checkCollision();
+			drawEverything();
+		}
+		
+		function checkCollision()
+		{
+			var paddleOneBottom = paddleOneY + PADDLE_HEIGHT;
+			var paddleOneTop = paddleOneY;
+			var paddleOneContactSide = paddleOneX + PADDLE_WIDTH;
+			
+			var paddleTwoBottom = paddleTwoY + PADDLE_HEIGHT;
+			var paddleTwoTop = paddleTwoY;
+			var paddleTwoContactSide = paddleTwoX;
+			
+			var deltaY;
+			//Checking collision 
+			if(((ballX - BALL_RADIUS)  < paddleOneContactSide 
+			&& ballY < paddleOneBottom 
+			&& ballY > paddleOneTop))
+			{	
+				ballSpeedX *= -1;
+				
+				deltaY = ballY
+							-(paddleOneY+PADDLE_HEIGHT/2);
+				ballSpeedY = deltaY * 0.35;
+				
+			}
+			else if ((ballX + BALL_RADIUS)  > paddleTwoContactSide 
+			&& ballY < paddleTwoBottom 
+			&& ballY > paddleTwoTop)
+			{
+				ballSpeedX *= -1;
+				deltaY = ballY
+							-(paddleTwoY+PADDLE_HEIGHT/2);
+				ballSpeedY = deltaY * 0.35;
+			
+			}
+			
+			
+			//Speed up ball if the paddle is moving when the ball is hit? 
+			
+			
+		}
+		
+		//Draw functions
+		function drawEverything()
+		{
+			//Draws background
+			drawRect(0,0,canvas.width,canvas.height, 'black');
+			
+			drawNet();
+			//test code for drawing a background image
+			drawImage('background',0,0);
+			
+			//Draw paddles
+			//Paddle 1
+			//drawRect(paddleOneX,paddleOneY,PADDLE_WIDTH,PADDLE_HEIGHT, 'white');
+			drawImage('paddle',paddleOneX,paddleOneY);
+			//Paddle 2
+			//drawRect(paddleTwoX,paddleTwoY,PADDLE_WIDTH,PADDLE_HEIGHT, 'white');
+			drawImage('paddle2',paddleTwoX,paddleTwoY);
+			//Draws Ball
+			//drawCircle(ballX,ballY,BALL_RADIUS,'red');
+			drawImage('ballSprite',ballSpriteX,ballSpriteY);
+			
+			drawText(playerOneScore,playerOneScoreX,playerOneScoreY,'black');
+			drawText(playerTwoScore,playerTwoScoreX,playerTwoScoreY,'black');
+			
+			if(gameOver)
+			{
+				drawText(gameOverText,300,250,'black');
+			
+			}
+			
+		}
+		
+		function drawNet()
+		{
+			for(var i=0;i<canvas.height; i+=40)
+			{
+			
+				drawRect(canvas.width/2-1,i,2,20,'white');
+			
+			}
+		}
+		
+		function drawRect(leftX, topY, width, height, drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.fillRect(leftX,topY,width,height);
+		}
+		
+		
+		function drawCircle(leftX, topY, diameter,drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.beginPath();
+			
+			//draw arc
+			canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+			canvasContext.fill();
+		
+		}
+		function drawText(text,textX,textY,drawColor)
+		{
+			canvasContext.strokeStyle = drawColor;
+			canvasContext.font = "25px Arial";
+			canvasContext.strokeText(text,textX,textY);
+		}
+		function drawImage(imageID,imageX,imageY)
+		{
+			var img = document.getElementById(imageID);
+			canvasContext.save();
+			if(imageID == "ballSprite")
+			{
+				
+				canvasContext.rotate(20*Math.PI/180);
+				
+			}
+			
+			canvasContext.drawImage(img,imageX,imageY);
+			canvasContext.restore();
+			
+			
+			
+			
+		}
+		
+		
+		
+		
+		function moveEverything()
+		{
+			if(gameOver == false)
+			{
+				moveBall();
+				movePaddleTwo();
+			}
+			
+		}
+		
+		function movePaddleTwo()
+		{
+			if(paddleTwoY + PADDLE_HEIGHT/2 < ballY -  PADDLE_HEIGHT/4)
+			{
+				paddleTwoY += 6;
+			}
+			else if(paddleTwoY + PADDLE_HEIGHT/2 > ballY + PADDLE_HEIGHT/4)
+			{
+				paddleTwoY -= 6;
+			}
+		
+		}
+		function moveBall()
+		{
+			ballX += ballSpeedX;
+			ballY += ballSpeedY;
+			ballSpriteX = ballX - BALL_RADIUS;
+			ballSpriteY = ballY - BALL_RADIUS;
+			
+			if (ballX > (CANVAS_WIDTH - (ballDiameter/2)))
+			{
+				playerOneScore++;
+				resetBall(1);
+			}
+			else if (ballX < (0 + (ballDiameter/2)))
+			{
+				
+				playerTwoScore++;
+				resetBall(0);
+			}			
+			if (ballY > (CANVAS_HEIGHT - (ballDiameter/2)) || ballY < (0 + (ballDiameter/2)))
+			{
+				ballSpeedY *= -1;
+			}
+			
+		}
+		
+		function resetBall(dir)
+		{
+			checkScore();
+			ballX = BALL_START_X;
+			ballY = BALL_START_Y;
+			ballSpriteX = BALL_START_X;
+			ballSpriteY = BALL_START_Y;
+			ballSpeedX, ballSpeedY = BALL_START_SPEED;
+		}
+		
+		function checkScore()
+		{
+			if(playerOneScore == WINNING_SCORE)
+			{
+				gameOverText = 'Player One Wins! Click to Reset';
+				playerOneScore = 0;
+				playerTwoScore = 0;
+				gameOver = true;
+			}
+			else if(playerTwoScore == WINNING_SCORE)
+			{
+				gameOverText = 'Player Two Wins! Click to Reset';
+				playerOneScore = 0;
+				playerTwoScore = 0;
+				gameOver = true;
+			}
+		
+		}
+		
+			
+	</script>
+</html>

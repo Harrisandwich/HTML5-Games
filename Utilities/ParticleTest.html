@@ -1,0 +1,757 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<script src="ParticleEffectComponant.js"></script>
+	<p><a href="../../games.php">back to games</a></p>
+  </head>
+  <body>
+  <div style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; text-align:center;"><h1>Particle Engine Tester</h1></div>
+    <canvas id="myCanvas" width="800" height="600" style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;"></canvas>
+    <script>
+		/*
+			ParticleTest.html
+			-----------------------
+			
+			Plan:
+				- add sliders for:
+					- colours
+						- red
+						- green
+						- blue
+					- size
+					- duration
+					- lifespan
+					- max amount of particles
+					- spawn rate
+					
+				- radio buttons for type
+		
+		*/
+	
+	
+	
+		//Get canvas and 2d context
+		var canvas = document.getElementById('myCanvas');
+		var canvasContext = canvas.getContext('2d');
+		var mouseClicked = false;
+		var mouseX;
+		var mouseY;
+		var particleComponant;
+		var FRAMES_PER_SECOND = 60;
+		var SECOND_IN_MILISECONDS = 1000;
+		var radioButtonArray  = new Array();
+		var type = "trail"; 
+		var touching = false;
+		var usingTouchDevice = false;
+		//colour sliders
+		var colourSliderRed;
+		var colourSliderGreen;
+		var colourSliderBlue;
+		var touchEvent;
+		//other sliders
+		var particleSizeSlider;
+		var effectDurationSlider;
+		var particleLifespanSlider;
+		var maxNumParticlesSlider;
+		var particleSpawnRateSlider; 
+		
+		
+		
+		var radioButton = function()
+		{
+			this.x = 0;
+			this.y = 0;
+			this.onColour = "rgba(0,255,0,1)";
+			this.offColour = "rgba(255,60,0,1)";
+			this.clicked = false;
+			this.ID = 0;
+			this.text;
+			this.size = 15;
+			this.draw = function()
+			{
+				if(this.clicked == false)
+				{
+					this.drawButton(this.x,this.y,this.size,this.offColour);
+				}
+				else
+				{
+					this.drawButton(this.x,this.y,this.size,this.onColour);
+				}
+				this.drawLabel(this.text,this.x - this.size/2,this.y + this.size + 10,"white");
+				
+			};
+			this.checkClicked = function(mouseX,mouseY)
+			{
+				var dx = this.x - mouseX;
+				var dy = this.y - mouseY;
+				var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+				
+				if(dis < 20 && dis > -20)
+				{
+				
+					return this.ID;
+				}
+				else
+				{
+					
+					return "null";
+				}
+			
+			}
+			this.drawButton = function(leftX, topY, diameter,drawColor)
+			{
+				canvasContext.fillStyle = drawColor;
+				canvasContext.beginPath();
+				
+				//draw arc
+				canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+				canvasContext.fill();
+
+			};
+			this.drawLabel = function(text,textX,textY,drawColor)
+			{
+				canvasContext.fillStyle = drawColor;
+				canvasContext.font = "12px Arial";
+				canvasContext.fillText(text,textX,textY);
+			};
+		
+		}
+		var slider = function()
+		{
+			this.x = 0;
+			this.y = 0;
+			this.width = 0;
+			this.height = 0;
+			this.colour = "";
+			this.plain ="vert";
+			this.label = "";
+			this.value = 0;
+			this.maxValue = 0;
+			
+			this.grabbed = false;
+			
+			//handle dimensions
+			this.handleX;
+			this.handleY; 
+			this.handleWidth; 
+			this.handleHeight; 
+			
+			this.construct = function()
+			{
+				//handle dimensions
+				
+				if(this.plain == "vert")
+				{
+					this.handleSize = this.width;
+					this.handleX = this.x  + this.width/2;
+					this.handleY = this.y + 1;
+				}
+				else
+				{
+					this.handleSize = this.height;
+					this.handleX = this.x  + 1;
+					this.handleY = this.y + this.height/2;
+				}
+			
+			}
+			
+			this.draw = function()
+			{
+				
+				this.drawRect(this.x,this.y,this.width,this.height,this.colour);
+				this.drawHandle(this.handleX,this.handleY,this.handleSize,"white");
+				this.drawLabel(this.label,this.x + (this.width/3) - 12,this.y + this.height + 20,"white");
+				
+			
+			};
+			this.update = function()
+			{
+				if(this.plain == "vert")
+				{
+					//translate height to value
+					
+					//get a percentage value
+					this.value = ((this.handleY - this.y) - this.height)/this.height * -1;
+					
+					
+				}
+				else
+				{
+					//get a percentage value
+					this.value = ((this.handleX - this.x) - this.width)/this.width * -1;
+				}
+				
+				//transform that percentage into the desired value
+				this.value =  Math.round(this.maxValue * this.value);
+					
+			
+			}
+			this.drawRect = function(leftX,topY,width,height,drawColor)
+			{
+
+				canvasContext.fillStyle = drawColor;
+				canvasContext.fillRect(leftX,topY,width,height);
+				
+			}
+			this.drawHandle = function(leftX, topY, diameter,drawColor)
+			{
+				canvasContext.fillStyle = drawColor;
+				canvasContext.beginPath();
+				
+				//draw arc
+				canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+				canvasContext.fill();
+
+			};
+			this.drawLabel = function(text,textX,textY,drawColor)
+			{
+				canvasContext.fillStyle = drawColor;
+				canvasContext.font = "12px Arial";
+				canvasContext.fillText(text,textX,textY);
+			}
+			
+			this.grab = function(mouseX,mouseY,mouseDown)
+			{
+				
+				if(mouseDown)
+				{	
+					
+					var dx = this.handleX - mouseX;
+					var dy = this.handleY- mouseY;
+					var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+					
+					if(!this.grabbed)
+					{	
+						
+						if(dis < this.handleSize  && dis > -this.handleSize)
+						{
+							this.grabbed = true;
+							console.log(this.grabbed);
+						}
+						else
+						{
+							this.grabbed = false;
+						}
+					}
+					else
+					{
+						//console.log(dis);
+						this.slide(mouseX,mouseY);
+					}
+				}
+				else
+				{
+					
+					this.grabbed = false;
+				}
+			
+			}
+			
+			
+			this.slide = function(mouseX,mouseY)
+			{
+					if(this.plain == "vert")
+					{
+						console.log("about to slide");
+						if(this.handleY >= this.y && this.handleY <= (this.y + this.height))
+						{
+							
+							console.log("slide");
+							this.handleY = mouseY;
+						}
+						
+						
+						if(this.handleY < this.y)
+						{
+							console.log("dont slide");
+							this.handleY = this.y + 1;
+							
+						}
+						else if (this.handleY > (this.y + this.height))
+						{
+							console.log("dont slide");
+							this.handleY = this.y + this.height - 1;
+						}
+						
+						
+						
+					}
+					else
+					{
+						if(this.handleX >= this.x && this.handleX <= (this.x + this.width))
+						{
+							
+							//console.log("slide");
+							this.handleX = mouseX;
+						}
+						
+						if(this.handleX < this.x)
+						{
+							this.handleX = this.x + 1;
+							
+						}
+						else if (this.handleX > (this.x + this.width))
+						{
+							this.handleX = this.x + this.width - 1;
+						}
+						
+					}
+				
+			}
+			
+		}
+		canvas.addEventListener('mousemove',function(event){
+			if(!touching)
+			{
+				mouseX = calculateMousePosition(event).x;
+				mouseY = calculateMousePosition(event).y;
+			}
+		});
+		
+		window.addEventListener('keydown',function(event){
+
+		
+			if(event.keyCode == 88)
+			{
+				particleComponant.clear();
+				
+			}
+		});
+		
+		canvas.addEventListener('touchstart', function()
+		{
+			
+			touching = true;
+			usingTouchDevice = true;
+			touchEvent = event;
+			pointerDown(event);
+	
+		
+		},false);
+		canvas.addEventListener('touchmove',function(event){event.preventDefault(); if(touching){touchEvent = event;}
+		//console.log("trying to stop scroll");
+		});
+		canvas.addEventListener('touchend', touchUp,false);
+		//listen for a mouse click
+		canvas.addEventListener('mousedown',pointerDown,false);
+		
+		function pointerDown(event)
+		{
+			if(!touching)
+			{
+				mousePosX = calculateMousePosition(event);
+				mousePosY = calculateMousePosition(event);
+				mouseClicked = true;
+			}
+			
+			if(mouseX < 600)
+			{
+				/* function(colorRed,colorGreen,colorBlue, 
+					duration, framesPerSecond,particleSize,
+					maxNumParticles,startX,startY,particleLifespan,spawnRate,type)*/
+				
+			
+									  
+				  particleComponant.createParticleEffect(colourSliderRed.value,
+				   colourSliderGreen.value,
+				   colourSliderBlue.value, 
+				    effectDurationSlider.value, 
+				    particleSizeSlider.value,
+				   maxNumParticlesSlider.value,
+				   mouseX,
+				   mouseY,
+				   particleLifespanSlider.value,
+				 particleSpawnRateSlider.value,
+				   type,
+				   trailWidthSlider.value);
+				   
+			}
+			
+			for(var i = 0; i < radioButtonArray.length; i++)
+			{
+				
+				
+				buttonClicked = radioButtonArray[i].checkClicked(mouseX,mouseY);
+				
+				if(buttonClicked != "null")
+				{
+					break;
+				}
+			}
+			
+			if(buttonClicked != "null")
+			{
+				for(var i = 0; i < radioButtonArray.length; i++)
+				{
+					radioButtonArray[i].clicked = false;
+				}
+				radioButtonArray[buttonClicked].clicked = true;
+				type = radioButtonArray[buttonClicked].text;
+			}
+			
+
+		}
+		
+		//listen for a mouse release
+		canvas.addEventListener('mouseup', pointerUp,false);
+			
+
+		
+		function pointerUp(event)
+		{
+			mouseClicked = false;
+			
+		}
+		function touchUp()
+		{
+			touching = false;
+		}
+		function calculateMousePosition(evt)
+		{
+
+			var rect = canvas.getBoundingClientRect();
+			var root = document.documentElement;
+			var mousePosX = evt.clientX- rect.left - root.scrollLeft;
+			var mousePosY = evt.clientY- rect.top - root.scrollLeft;
+			
+			
+			return {
+				x:mousePosX,
+				y:mousePosY
+			}
+		}
+		resetGame();
+	
+		
+		function resetGame()
+		{
+			particleComponant = new particleEffectComponant();
+			
+			for(var i = 0; i < 3; i++)
+			{
+				var newRadioButton = new radioButton();
+				newRadioButton.ID = i;
+				
+				newRadioButton.x = 630 + (70*i);
+				newRadioButton.y = 500;
+				radioButtonArray.push(newRadioButton);
+			}
+			radioButtonArray[0].text = "trail";
+			radioButtonArray[0].clicked = true;
+			radioButtonArray[1].text = "burst";
+			radioButtonArray[2].text = "spout";
+			
+			
+			colourSliderRed = new slider();
+			colourSliderRed.x = 650;
+			colourSliderRed.y = 50;
+			colourSliderRed.width = 10;
+			colourSliderRed.height = 100;
+			colourSliderRed.colour = "red";
+			colourSliderRed.plain ="vert";
+			colourSliderRed.label = "Red";
+			colourSliderRed.maxValue = 255;
+			colourSliderRed.construct();
+			
+			colourSliderGreen = new slider();
+			colourSliderGreen.x = 690;
+			colourSliderGreen.y = 50;
+			colourSliderGreen.width = 10;
+			colourSliderGreen.height = 100;
+			colourSliderGreen.colour = "green";
+			colourSliderGreen.plain ="vert";
+			colourSliderGreen.label = "Green";
+			colourSliderGreen.maxValue = 255;
+			colourSliderGreen.construct();
+			
+			colourSliderBlue = new slider();
+			colourSliderBlue.x = 730;
+			colourSliderBlue.y = 50;
+			colourSliderBlue.width = 10;
+			colourSliderBlue.height = 100;
+			colourSliderBlue.colour = "blue";
+			colourSliderBlue.plain ="vert";
+			colourSliderBlue.label = "Blue";
+			colourSliderBlue.maxValue = 255;
+			colourSliderBlue.construct();
+			
+			//other sliders
+			/*
+			var particleSizeSlider;
+			var effectDurationSlider;
+			var particleLifespanSlider;
+			var maxNumParticlesSlider;
+			var particleSpawnRateSlider; 
+			*/
+			
+			particleSizeSlider = new slider();
+			particleSizeSlider.x = 630;
+			particleSizeSlider.y = 200;
+			particleSizeSlider.width = 100;
+			particleSizeSlider.height = 10;
+			particleSizeSlider.colour = "rgba(0,0,0,0.5)";
+			particleSizeSlider.plain ="hor";
+			particleSizeSlider.label = "Particle Size";
+			particleSizeSlider.maxValue = 8;
+			particleSizeSlider.construct();
+			
+			effectDurationSlider = new slider();
+			effectDurationSlider.x = 630;
+			effectDurationSlider.y = 250;
+			effectDurationSlider.width = 100;
+			effectDurationSlider.height = 10;
+			effectDurationSlider.colour = "rgba(0,0,0,0.5)";
+			effectDurationSlider.plain ="hor";
+			effectDurationSlider.label = "Effect Duration";
+			effectDurationSlider.maxValue = 100;
+			effectDurationSlider.construct();
+			
+			particleLifespanSlider = new slider();
+			particleLifespanSlider.x = 630;
+			particleLifespanSlider.y = 300;
+			particleLifespanSlider.width = 100;
+			particleLifespanSlider.height = 10;
+			particleLifespanSlider.colour = "rgba(0,0,0,0.5)";
+			particleLifespanSlider.plain ="hor";
+			particleLifespanSlider.label = "Particle Lifespan";
+			particleLifespanSlider.maxValue = 200;
+			particleLifespanSlider.construct();
+			
+			maxNumParticlesSlider = new slider();
+			maxNumParticlesSlider.x = 630;
+			maxNumParticlesSlider.y = 350;
+			maxNumParticlesSlider.width = 100;
+			maxNumParticlesSlider.height = 10;
+			maxNumParticlesSlider.colour = "rgba(0,0,0,0.5)";
+			maxNumParticlesSlider.plain ="hor";
+			maxNumParticlesSlider.label = "Max Number of Particles";
+			maxNumParticlesSlider.maxValue = 500;
+			maxNumParticlesSlider.construct();
+			
+			particleSpawnRateSlider = new slider();
+			particleSpawnRateSlider.x = 630;
+			particleSpawnRateSlider.y = 400;
+			particleSpawnRateSlider.width = 100;
+			particleSpawnRateSlider.height = 10;
+			particleSpawnRateSlider.colour = "rgba(0,0,0,0.5)";
+			particleSpawnRateSlider.plain ="hor";
+			particleSpawnRateSlider.label = "Spawn Rate";
+			particleSpawnRateSlider.maxValue = 10;
+			particleSpawnRateSlider.construct();
+			
+			trailWidthSlider = new slider();
+			trailWidthSlider.x = 665;
+			trailWidthSlider.y = 480;
+			trailWidthSlider.width = 5;
+			trailWidthSlider.height = 50;
+			trailWidthSlider.colour = "rgba(0,0,0,0.5)";
+			trailWidthSlider.plain ="vert";
+			trailWidthSlider.label = "Trail Width";
+			trailWidthSlider.maxValue = 20;
+			trailWidthSlider.construct();
+			
+			
+			particleComponant.construct(canvas,canvasContext,FRAMES_PER_SECOND);
+			mainGameLoop = setInterval(mainLoop,SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+			
+		}
+		function mainLoop()
+		{
+			
+			drawEverything();
+			updateEverything();
+			
+			
+			
+			
+			if(touching)
+			{
+				var touch = touchEvent.touches[0];
+				var x = touch.pageX;
+				var y = touch.pageY;
+				//mouseY = event.clientY- rect.top - root.scrollLeft;
+				var x_2 = touch.pageX - canvas.offsetLeft;
+				var y_2 = touch.pageY - canvas.offsetTop;
+				//console.log(y_2);
+				colourSliderRed.grab(x_2,y_2,touching);
+				colourSliderGreen.grab(x_2,y_2,touching);
+				colourSliderBlue.grab(x_2,y_2,touching);
+				         particleSizeSlider.grab(x_2,y_2,touching);
+				   effectDurationSlider.grab(x_2,y_2,touching);
+				 particleLifespanSlider.grab(x_2,y_2,touching);
+				  maxNumParticlesSlider.grab(x_2,y_2,touching);
+				particleSpawnRateSlider.grab(x_2,y_2,touching); 
+				       trailWidthSlider.grab(x_2,y_2,touching);
+			}
+			else
+			{
+				colourSliderRed.grab(mouseX,mouseY,mouseClicked);
+				colourSliderGreen.grab(mouseX,mouseY,mouseClicked);
+				colourSliderBlue.grab(mouseX,mouseY,mouseClicked);
+				particleSizeSlider.grab(mouseX,mouseY,mouseClicked);
+				effectDurationSlider.grab(mouseX,mouseY,mouseClicked);
+				particleLifespanSlider.grab(mouseX,mouseY,mouseClicked);
+				maxNumParticlesSlider.grab(mouseX,mouseY,mouseClicked);
+				particleSpawnRateSlider.grab(mouseX,mouseY,mouseClicked); 
+				trailWidthSlider.grab(mouseX,mouseY,mouseClicked);
+			}
+			
+			trailWidthSlider.label = trailWidthSlider.value;
+	
+			
+			
+			
+		
+
+		}
+		function drawEverything()
+		{
+			drawBackground();
+			drawInterfaceBackground();
+			drawSliders();
+			drawLabels();
+			drawClearButton();
+			for(var i = 0; i < radioButtonArray.length; i++)
+			{
+				radioButtonArray[i].draw();
+			}
+			particleComponant.drawEverything();
+		
+		}
+		function drawClearButton()
+		{
+			drawCircle(740,600,50,"white");
+			drawTinyText("Clear",725,580,"black");
+		
+		}
+		function drawLabels()
+		{
+			drawSmallText("Colour",660,30,"white");
+			
+			drawSmallText("Type",670,460,"white");
+			drawTinyText(particleSizeSlider.value,740,210,"white");
+			drawTinyText(effectDurationSlider.value,740,260,"white");
+			drawTinyText(particleLifespanSlider.value,740,310,"white");
+			drawTinyText(maxNumParticlesSlider.value,740,360,"white");
+			drawTinyText(particleSpawnRateSlider.value,740,410,"white");
+			drawTinyText("Made by Harrison Hutcheon",10,590,"white");
+			
+			if(usingTouchDevice)
+			{
+				drawTinyText("Touch outside the canvas to scroll",400,590,"white");
+			}
+		}
+		function drawBackground()
+		{
+			//draw black background
+			drawRect(0,0,canvas.width,canvas.height,'black');
+		}
+		function drawInterfaceBackground()
+		{
+			drawRect(600,0,200,canvas.height,'grey');
+		}
+		function drawSliders()
+		{
+		
+			colourSliderRed.draw();
+			colourSliderGreen.draw();
+			colourSliderBlue.draw();
+			/*other sliders*/
+			     particleSizeSlider.draw();
+			   effectDurationSlider.draw();
+			 particleLifespanSlider.draw();
+			  maxNumParticlesSlider.draw();
+			particleSpawnRateSlider.draw(); 
+			trailWidthSlider.draw();
+		}
+		function updateEverything()
+		{
+			particleComponant.updateEverything();
+			updateSliders();
+			checkClear();
+		}
+		function checkClear()
+		{
+			if(mouseClicked)
+			{
+				var dx = 740 - mouseX;
+				var dy = 600 - mouseY;
+				var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+				
+				if(dis > -50 && dis < 50)
+				{
+					particleComponant.clear();
+				}
+			}
+		}
+		function updateSliders()
+		{
+			colourSliderRed.update();
+			colourSliderGreen.update();
+			colourSliderBlue.update();
+			
+			/*other sliders*/
+			     particleSizeSlider.update();
+			   effectDurationSlider.update();
+			 particleLifespanSlider.update();
+			  maxNumParticlesSlider.update();
+			particleSpawnRateSlider.update(); 
+			trailWidthSlider.update();
+		}
+		function drawRect(leftX, topY, width, height, drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.fillRect(leftX,topY,width,height);
+		}
+		function drawCircle(leftX, topY, diameter,drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.beginPath();
+			
+			//draw arc
+			canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+			canvasContext.fill();
+
+		}
+		function drawLargeText(text,textX,textY,drawColor)
+		{
+			canvasContext.strokeStyle = drawColor;
+			canvasContext.font = "50px Arial";
+			canvasContext.strokeText(text,textX,textY);
+		}
+		function drawMidText(text,textX,textY,drawColor)
+		{
+			canvasContext.strokeStyle = drawColor;
+			canvasContext.font = "45px Arial";
+			canvasContext.strokeText(text,textX,textY);
+		}
+		function drawSmallText(text,textX,textY,drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.font = "25px Arial";
+			canvasContext.fillText(text,textX,textY);
+		}
+		function drawTinyText(text,textX,textY,drawColor)
+		{
+			canvasContext.fillStyle = drawColor;
+			canvasContext.font = "12px Arial";
+			canvasContext.fillText(text,textX,textY);
+		}
+		function drawImage(imageID,imageX,imageY,width,height)
+		{
+			var img = document.getElementById(imageID);
+			canvasContext.drawImage(img,imageX,imageY,width,height);
+		}
+
+    </script>
+	
+  </body>
+</html>      

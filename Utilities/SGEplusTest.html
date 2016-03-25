@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<script src="./SGEplus.js"></script>
+	<p><a href="../../games.php">back to games</a></p>
+  </head>
+  <body>
+  <div style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; text-align:center;"><h1>SGEplus</h1></div>
+
+    <canvas id="myCanvas" width="800" height="600" style="padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;">
+   
+    </canvas>
+    <script>
+
+
+      SGEplus.init(document.getElementById('myCanvas'), document.getElementById('myCanvas').getContext('2d'), 30);
+      SGEplus.createGame("sideScroller");
+
+
+      var myGame = SGEplus.game;
+      myGame.name = "Nobbers";
+      SGEplus.inputMap.mapInput("mousedown",moveCollider);
+
+      var collider = new SGEplus.circleCollider();
+      
+
+
+      myGame.start();
+
+      myGame.skybox.texture.src = "balls.png";
+
+
+      collider.radius = 10;
+      collider.rootX = 20;
+      collider.rootY = 20;
+
+      function moveCollider()
+      {
+        collider.rootX += 5;
+      }
+    </script>
+
+
+</div>
+	
+  </body>
+</html>     

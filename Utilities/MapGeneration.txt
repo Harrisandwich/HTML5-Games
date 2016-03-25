@@ -1,0 +1,62 @@
+/*
+
+Map generation brainstorm 
+-------------------------
+
+- different "structures"
+	- hills 
+
+          oooo
+         o    o
+        o      o
+       o        o
+      o          o
+     o            o
+    o              o
+
+	- valleys
+
+
+
+
+    oooooooooooooooooo
+
+
+
+	- peaks
+
+
+         o
+        o o
+       o   o
+      o     o
+     o       o
+    o         o
+   
+	- cliffs 
+
+    ooooooooooooo
+                o
+                o
+                o
+              o
+             o
+
+	- canyons
+
+	o         o
+	 o       o
+	  o     o
+	   o   o
+	    o o
+	     o
+
+
+*/
+
+
+What do I want
+---------------------------
+
+- different algorithms for each structure 
+- the ability to mix and match these algorithms to create landscapes 

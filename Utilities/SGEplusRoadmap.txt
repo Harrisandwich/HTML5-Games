@@ -1,0 +1,18 @@
+Road Map:
+-------------------
+
+- Initial Framework 
+	- Skybox **completed**
+	- game object
+		- Basic Class **completed**
+		- Adding sprites
+		- Adding Colliders 
+		- Adding other game objects 
+	- textures
+		- drawing
+- Key Mapping **completed**
+	- Mouse Mapping **completed**
+- Working colliders
+	- Check collisions
+- Animating sprites
+

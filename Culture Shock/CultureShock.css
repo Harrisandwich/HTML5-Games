@@ -1,0 +1,27 @@
+hml, body, div, canvas {
+    margin: 0;
+    padding: 0;
+}
+
+.styled-select select
+{
+    background: transparent;
+   width: 268px;
+   padding: 5px;
+   font-size: 16px;
+   line-height: 1;
+   border: 0;
+   border-radius: 0;
+   height: 5vh;
+   background-color: lightgray;
+
+   
+}
+
+div#menu-bar {
+
+    height: 5vh;
+    display:block;
+    position: relative;
+    font-size: : 30px;
+}

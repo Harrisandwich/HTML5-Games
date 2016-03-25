@@ -1,0 +1,225 @@
+Post apocalypse base:
+-------------------------
+- grid with tiles in small area
+- conduct trades with friends 
+- collect resources 
+- send out scouts 
+- build your base 
+- local view of base and map of area
+- canvas shows base and facilities
+- web page itself has things like a log
+  and other interfaces
+- ON CANVAS
+	- base
+	- building interface 
+	- area map 
+	- visual rep of resources?
+	- Trade interface
+- ON WEBPAGE
+	- activity log
+	- Base stats 
+	- resources 
+	- survivor stats/list
+- resources
+	- food
+		- more survivors -food over time
+	- water 
+		- more survivors -water over time
+	- weapons (general)
+		- melee and projectile
+		- + defence
+		- Can send with scouts to ensure survival
+	- ammo (general)
+		- allows for projectile weapons to be used
+	- comfort items (general)
+		- + morale 
+	- building materials
+		- allows you to build new facilities and fortifications 
+	- survivors 
+		- survivors have there own stats and affinities and can be traded
+		
+- base stats
+	- Food
+		- keeps survivors alive 
+		- more food, more survivors you can have
+	- Water 
+		- keeps survivors alive 
+		- more water, more survivors you can have
+	- Defence 
+		- how you hold up to raids or attacks 
+	- Morale 
+		- how productive your base is
+		- average of survivor morale
+	- Attraction
+		- how likely you are to get survivors coming to your base 
+	-storage 
+		- how much you can store 
+		- this is expressed as a max on resources
+			- ex: food: 100/200 200 being the max food storage space 
+	- behind the scenes 
+		- "level"
+			- how powerful the raids are 
+- survivor stats
+	- Morale
+		- happiness and productivity
+	- Farming
+		- How they are at producing food
+	- Combat 
+		- how they are at defense
+	- Scouting 
+		- how they are at locating resources and other bases 
+	- Building
+		- How they are at constructing fortifications 
+			- when a structure is created it doesn't start with full health 
+			- the better the builder, the better the structures and maintenance
+			
+			
+Screens:
+	- Survivor list
+		- radio button list to select a survivor and assign to task
+	- Building list
+		- radio button list to select a building to construct
+		- leads you to survivor list to pick a builder 
+	- Base list
+		- radio button list of bases to interact with
+
+
+
+Weapons, Buildings, and Survivors
+----------------------------------
+- Weapons, buildings, and survivors can be discovered and collected a la fallout shelter
+- If i include them in the javascript, advanced users will be able to cheat in the browser and access them
+- I could include them in the database, then create the object when the item is discovered.
+	- for this there would be 3 tables: Weapons, Buildings, Survivors. 
+		_ tbl_weapons
+			- name
+			- image source
+			- damage
+			- accuracy
+		- tbl_buildings
+			- name 
+			- image source
+			- NOTE: two ways do deal with stats
+				- have a field for each stat
+					- no extra parsing
+					- can grab specific stats 
+					- allows for sorting 
+					- fields 
+						- Food Production
+						- Water Production 
+						- Morale 
+						- Food Storage Mod
+						- Water Storage Mod 
+						- Comfort Item Storage Mod
+						- Building Material Storage Mod 
+						- Weapon Storage Mod
+						- Survivor Storage Mod 
+						- Combat Training
+						- Farming Training
+						- Building Training 
+				- have a delimited string (ex 1|2|5|3|7 etc)
+					- less to query the database for	
+		- tbl_survivors
+			- name 
+			- image source 
+			- Morale
+			- Farming
+			- Combat 
+			- Scouting 
+			- Building
+- For testing purposes, the Weapons, buildings, and survivors will be stored locally in the alpha	
+- need to figure out how to run the php without allowing the user to interfere. If i use AJAX like below
+  then the user can insert whichever number they want and acquire any item.
+- this needs to be considered before i move onto the database development portion of the project.
+	- most users wont hack the system(wont know how or wont care)
+	- users are playing with friends in a room with a player limit (self moderating)
+		- they wont want to cheat against their friends, or players will not want to play with someone who cheats
+- Actually I just realized that there are a number of ways to cheat with the JS console if I'm not careful/if i care enough:
+	- Player could change how much building materials they have
+	- player could create a custom building, weapon, or survivor and add it to their base
+	- player could "bump" up any stat they want in browser. By changing a variable they could give themselves more food in a time of crisis, then give that food to others.
+- RECENTLY DISCOVERED!! : If i throw the javascript into a different file then it cant be tampered with. 
+
+
+Some TeSQL (get it? like test, but SQL. TeSQL):
+-----------------------------------------------
+- would have to steal some ajax stuff from sushi bai kioshi
+
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange=function()
+    {
+	
+		if(xmlhttp.readyState==4 && xmlhttp.status==200)
+		{
+			//get the response text
+			=xmlhttp.responseText;
+                        
+		}
+	}
+
+	
+	
+	//The page get the menu as a whole. 
+    //I originally considered getting each category, but realized that would be unnecessary 
+	
+	xmlhttp.open("GET","getBuilding.php"+buildingNumber);
+	xmlhttp.send();
+
+
+
+
+
+
+
+Key DB update points:
+-----------------------
+- On game load
+- on base discovery
+- on landmark discovery 
+- on trade/player interaction
+
+
+
+List scrolling:
+-------------------------------
+
+- Array of items shown
+- Array of items 
+
+var itemsShown = new Array();
+var items = new Array(); 
+var maxItemsShown = 5;
+var listModifier = 0; 
+
+for(var i = 0 + listModifier; i < maxItemsShown + listModifier; i++) 
+//when mod is 0 items are 1,2,3,4,5
+//when mod is 1 items are 2,3,4,5,6 etc
+itemsShown.push(items[i]);
+
+
+//on right button push
+if(mod > 0)
+{
+	mod--;
+	//refreshing might not be needed
+	refreshList();
+}
+
+//on left button push
+mod++;
+refresh();
+
+
+//putting together a survivor list 
+- create survivors and put into survivor pool
+- add to survivor list
+ 
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+  
+  </head>
+  <body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <script>
+	//Constants
+	const SECOND_IN_MILISECONDS = 1000;
+	const FRAMES_PER_SECOND = 30;
+	var canvas = document.getElementById('myCanvas');
+	var canvasContext = canvas.getContext('2d');
+
+	function calculateMousePosition(event)
+	{
+	
+		var rect = canvas.getBoundingClientRect();
+		var root = document.documentElement;
+		var mouseY = event.clientY - rect.left - root.scrollLeft;
+		var mouseX = event.clientX - rect.left - root.scrollLeft;
+		return {
+			y:mouseY,
+			x:mouseX
+		}
+	}
+	setInterval(mainLoop,SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+      
+    canvas.addEventListener('mousemove',function(event){
+	
+		console.log(calculateMousePosition(event).y)
+		console.log(calculateMousePosition(event).x);
+		
+	
+	});
+
+	  
+	window.addEventListener('keydown', function(event){
+			
+		rotatePlayer(event);
+	},true);
+	function mainLoop()
+	{
+		drawEverything();
+	}
+	
+	function drawEverything()
+	{
+		drawRect(0,0,canvas.width,canvas.height,'black');
+		canvasContext.fillStyle = 'blue';
+		canvasContext.fillRect(50 / -2, 70 / -2, 50, 70);
+	
+	}
+	function rotatePlayer(event)
+	{
+		var rotationDirection = 80;
+		 // translate context to center of canvas
+		 //canvasContext.translate(canvas.width / 2, canvas.height / 2);
+		switch(event.keyCode)
+		{
+			case 65:{rotationDirection = -80; break;}
+			case 83:{rotationDirection = 80; break;}
+		}
+		// rotate 45 degrees clockwise
+		canvasContext.rotate(Math.PI / rotationDirection);
+
+		
+	}
+	
+	
+	
+	
+	function drawRect(leftX, topY, width, height, drawColor)
+	{
+		canvasContext.fillStyle = drawColor;
+		canvasContext.fillRect(leftX,topY,width,height);
+	}
+	
+	
+	function drawCircle(leftX, topY, diameter,drawColor)
+	{
+		canvasContext.fillStyle = drawColor;
+		canvasContext.beginPath();
+		
+		//draw arc
+		canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
+		canvasContext.fill();
+	
+	}
+	function drawText(text,textX,textY,drawColor)
+	{
+		canvasContext.strokeStyle = drawColor;
+		canvasContext.font = "25px Arial";
+		canvasContext.strokeText(text,textX,textY);
+	}
+	function drawImage(imageID,imageX,imageY)
+	{
+			var img = document.getElementById(imageID);
+			canvasContext.drawImage(img,imageX,imageY);
+			
+			
+			
+		
+	}
+	 
+    </script>
+  </body>
+</html>      
