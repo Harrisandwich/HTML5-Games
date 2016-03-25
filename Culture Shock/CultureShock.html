@@ -14,6 +14,8 @@
           <option value="green">Green</option>
         </select>
         <input type="button" value="Pause" id="pauseButton"/>
+        <input type="checkbox" name="showIds" value="show" onchange="toggleIds(checked)"/>Show IDs
+        <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div>
       </div>
     </div>
     <canvas id="myCanvas" width = "auto" height="auto" style="padding-left: 0;

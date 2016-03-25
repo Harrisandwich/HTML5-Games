@@ -58,15 +58,17 @@ var node = function(){
     this.x               = 0; 
     this.y               = 0;
     this.size            = 5.0;             //size (float)       
-    this.redOutRate      = 0.0;             //redOutRate (float)
-    this.blueOutRate     = 0.0;             //blueOutRate (float)
-    this.greenOutRate    = 0.0;             //greenOutRate (float)
+    this.redOutRate      = 0;             //redOutRate (float)
+    this.blueOutRate     = 0;             //blueOutRate (float)
+    this.greenOutRate    = 0;             //greenOutRate (float)
     //growthRate (float)
     //this will either be variable or a global constant
     //this.growthRate = 0.0;
     this.growthRate      = NODE_GROWTH_RATE;
     //connectedNodes (Array)
     this.connectedNodes  = new Array();
+    this.children = 0;
+    this.closeCount = 0;
 
 
 //Functions 
@@ -77,23 +79,63 @@ var node = function(){
         //it will create new nodes
         // the distance of the node will be a random number between a max and min and will be a random direction
         // ill have to figure out how to keep new nodes away from existing nodes 
-        var roll = Math.ceil(Math.random() * (this.size - 1) + 1)
+        var roll = Math.random() * (this.size - 1);
 
-        if(roll > (this.size * 0.99))
+        if(roll > (this.size * 0.92))
         {
-            var newNode = new node();
-            var rect = canvas.getBoundingClientRect();
-            newNode.x = this.x + 100;
-            newNode.y = this.y + 100; 
-            newNode.colour.blue = this.blue;
-            newNode.colour.red = this.red;
-            newNode.colour.green = this.green;
-            newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1);
-            this.connectedNodes.push({ id: newNode.id, nodeObj: newNode});
-            nodes.push({ id: newNode.id, nodeObj: newNode});
+           
+            var point; 
+            var tooClose = false;
+            //check con
+            
+            
+            while(true)
+            {
+                point = getRandomPoint(this.size/2 + 150);
+                point.size = this.size/2;
+                if((point.x + this.x) > 0 && (point.y + this.y) > 0)
+                {
+                    break;
+                }
+                
+            }
+            
+            for(n in nodes)
+            {
+              
+                if(getDistance(point,nodes[n].nodeObj) <= 100)
+                {
+                    tooClose = true;
+                    this.closeCount++;
+                    break;
+
+                }
+                
+                
+            }
+
+        
+           
+            if(!tooClose)
+            {
+                 var newNode = new node();
+                newNode.x = point.x + this.x; 
+                newNode.y = point.y + this.y; 
+                newNode.colour.blue = this.colour.blue;
+                newNode.colour.red = this.colour.red;
+                newNode.colour.green = this.colour.green;
+                newNode.size = this.size/2;
+                do
+                {
+                    newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1);
+                }
+                while(doesIdExist(newNode.id))
+                this.connectedNodes.push({ id: newNode.id, nodeObj: newNode});
+                nodes.push({ id: newNode.id, nodeObj: newNode});
+                this.children++;
+            }
             
         }
-        console.log(roll);
     }
     //checkProximity
     this.checkProximity = function()
@@ -160,15 +202,28 @@ var node = function(){
         //generic update method
 
         //grow
+        
         var checkBool = false
         //NOTE: Im doing this check alot, move to function
-
-        //Here im trying to prevent nodes from growing when they get a certain distance from eachother
+        if(this.colour.red > 0)
+        {
+            this.redOutRate = Math.ceil((this.colour.red * this.size)/100);  
+        }
+        if(this.colour.blue > 0)
+        {
+            this.blueOutRate = Math.ceil((this.colour.blue * this.size)/100); 
+        }
+         
+         if(this.colour.green > 0)
+        {
+            this.greenOutRate  = Math.ceil((this.colour.green * this.size)/100);   
+        }
+         
         if(this.connectedNodes.length > 0)
         {
             for(cn in this.connectedNodes)
             {
-                if(getDistance(this.connectedNodes[cn].nodeObj,this) <= 10)
+                if(getDistance(this.connectedNodes[cn].nodeObj,this) <= 25)
                 {
                     checkBool = true;
                     break;
@@ -190,8 +245,71 @@ var node = function(){
         //check for adjacent unconnected nodes 
         this.checkProximity();
         //roll for new node creation
-        this.createNewNode();
+        if(this.children < 3 || this.closeCount > 10 || nodes.length < 100)
+        {
+            this.createNewNode();
+        }
+
+
+
         //send influence
+        for(cn in this.connectedNodes)
+        {
+
+            if(this.connectedNodes[cn].nodeObj.colour.red < 255)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.red + this.redOutRate) > 255)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = 255;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate;
+                }
+            }
+            if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = 255;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate;
+                }
+            }
+            if(this.connectedNodes[cn].nodeObj.colour.green < 255)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.green + this.greenOutRate) > 255)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = 255;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate;
+                }
+                
+            }
+
+
+            if(this.redOutRate > this.blueOutRate && this.redOutRate > this.greenOutRate)
+            {
+                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.redOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.redOutRate/10);
+            }
+            if(this.blueOutRate > this.redOutRate && this.blueOutRate > this.greenOutRate)
+            {
+                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.blueOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.blueOutRate/10);
+            }
+            if(this.greenOutRate > this.blueOutRate && this.greenOutRate > this.redOutRate)
+            {
+                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.greenOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.greenOutRate/10);
+            }
+            
+            
+        }
     }
     //draw
     this.draw = function()
@@ -200,17 +318,11 @@ var node = function(){
         //NOTE: I should make the lines slightly transparent so overlapping lines merge into one colour OR even better, 
         //TWO lines between nodes. It would look cool
         //Maybe move this to a manager 
-        if(this.connectedNodes.length > 0)
-        {
-            for(cn in this.connectedNodes)
-            {
-                drawLine({ x: this.x * scale, y: this.y * scale}, {x: this.connectedNodes[cn].nodeObj.x * scale,y: this.connectedNodes[cn].nodeObj.y * scale},this.size/5);
-
-            }
-        }
         drawCircle(this.x,this.y,this.size,this.colour.getString());
-        drawTinyText(this.id,this.x,this.y,"white");
-
+        if(showIds)
+        {
+            drawTinyText(this.id,this.x,this.y,"white");
+        }
         
 
 
@@ -234,16 +346,19 @@ window.addEventListener('keydown', zoom);
 
 var mainLoopID;
 var gameTimerID;
+var showIds = false;
+var tickSpeed = 1000;
 
 resetGame();
 
 function resetGame()
 {
+    document.getElementById("speedLabel").innerHTML = tickSpeed;
     document.getElementById("pauseButton").setAttribute("onclick", "pause()");
     document.getElementById("pauseButton").setAttribute("value", "Pause");
     setColour(document.getElementById("colourSelect").value);
     mainLoopID = setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
-    gameTimerID = setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
+    gameTimerID = setInterval(gameTimerFunction,tickSpeed);
 }
 
 function mainLoop()
@@ -263,7 +378,9 @@ function gameTimerFunction()
 function drawEverything()
 {
     drawBackground();
+    drawLines();
     drawNodes();
+    
 }
 
 function updateEverything()
@@ -311,6 +428,23 @@ function drawNodes()
     }
 }
 
+function drawLines()
+{
+    if(nodes.length > 1)
+    {
+        for(n in nodes)
+        {
+            if(nodes[n].nodeObj.connectedNodes.length > 0)
+            {
+                for(cn in nodes[n].nodeObj.connectedNodes)
+                {
+                    drawLine({ x: nodes[n].nodeObj.x, y: nodes[n].nodeObj.y}, {x: nodes[n].nodeObj.connectedNodes[cn].nodeObj.x,y: nodes[n].nodeObj.connectedNodes[cn].nodeObj.y},1,"white");
+                }
+            }
+        }
+    }
+}
+
 function getDistance(objectOne,objectTwo)
 {
     var dx;
@@ -324,7 +458,6 @@ function getDistance(objectOne,objectTwo)
     dis -= objectOne.size;
     dis -= objectTwo.size;
 
-    console.log(objectOne.id + " is " + dis + " pixels from " + objectTwo.id);
     return dis;
 }
 
@@ -337,7 +470,6 @@ function setColour(value)
 
     //this is activated by radio buttons
     //it sets the colour the user can place 
-    console.log(value);
     switch(value)
     {
         case "blue":
@@ -356,6 +488,19 @@ function setColour(value)
             selectedColour.green = 255;
             break;
     }
+}
+
+function setSpeed(value)
+{
+    tickSpeed = 1000/value;
+    document.getElementById("speedLabel").innerHTML = value;
+    pause();
+    resetGame();
+}
+
+function toggleIds(isChecked)
+{
+    showIds = isChecked;
 }
 
 function pause()
@@ -377,10 +522,40 @@ function placeNode(event)
     newNode.colour.blue = selectedColour.blue;
     newNode.colour.red = selectedColour.red;
     newNode.colour.green = selectedColour.green;
-    newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1)
+    newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1);
+    do
+    {
+        newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1);
+    }
+    while(doesIdExist(newNode.id));
     nodes.push({ id: newNode.id, nodeObj: newNode});
     
 
+}
+
+function doesIdExist(id)
+{
+    var value = false;
+
+    for(n in nodes)
+    {
+        if(id == nodes[n].id)
+        {
+            value = true;
+            break;
+        }
+    }
+
+
+    return value;
+}
+
+function getRandomPoint(radius) {
+    var angle = Math.random() * Math.PI * 2;
+    return {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius
+    };
 }
 
 function zoom(event)
@@ -398,13 +573,14 @@ function zoom(event)
 
 }
 
-function drawLine(start,end,lnWidth)
+function drawLine(start,end,lnWidth,strokeColour)
 {
     
     canvasContext.beginPath();
     canvasContext.moveTo(start.x,start.y);
     canvasContext.lineTo(end.x,end.y);
     canvasContext.lineWidth = lnWidth;
+    canvasContext.strokeStyle = strokeColour;
     canvasContext.stroke();
 }
 
