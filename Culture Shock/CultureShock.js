@@ -85,42 +85,68 @@ var node = function(){
         {
            
             var point; 
-            var tooClose = false;
+            var badPlacement = false;
             //check con
-            
-            
-            while(true)
+            var badPlacementCount = 0;
+            do
             {
+                console.log("Placement Check: Start");
+                badPlacementCount ++;
+                badPlacement = false;
                 point = getRandomPoint(this.size/2 + 150);
                 point.size = this.size/2;
-                if((point.x + this.x) > 0 && (point.y + this.y) > 0)
-                {
-                    break;
-                }
+                point.x += this.x;
+                point.y += this.y;
                 
-            }
-            
-            for(n in nodes)
-            {
-              
-                if(getDistance(point,nodes[n].nodeObj) <= 100)
+                if(point.x < 0 || point.y < 0 || point.x > canvas.width || point.y > canvas.height)
                 {
-                    tooClose = true;
+                    badPlacement = true;
+                }
+
+
+                    
+
+                if(!badPlacement)
+                {
+                    console.log("Placement Check: Point Within Area");
+                    for(n in nodes)
+                    {
+                        console.log("Placement Check: Checking distance from other nodes");
+                        if(getDistance(point,nodes[n].nodeObj) <= 25)
+                        {
+                            badPlacement = true;
+                            break;
+                            //this.closeCount++;
+
+                        }
+                        else
+                        {
+                            badPlacement = false;
+                        }
+                        
+                        
+                    }
+                    if(!badPlacement)
+                    {
+                        break;
+                    }
+                }
+                if(badPlacementCount > 10)
+                {
                     this.closeCount++;
                     break;
-
                 }
-                
-                
+
             }
+            while(badPlacement);
 
         
            
-            if(!tooClose)
+            if(!badPlacement)
             {
                  var newNode = new node();
-                newNode.x = point.x + this.x; 
-                newNode.y = point.y + this.y; 
+                newNode.x = point.x; 
+                newNode.y = point.y; 
                 newNode.colour.blue = this.colour.blue;
                 newNode.colour.red = this.colour.red;
                 newNode.colour.green = this.colour.green;
@@ -205,18 +231,23 @@ var node = function(){
         
         var checkBool = false
         //NOTE: Im doing this check alot, move to function
-        if(this.colour.red > 0)
+        if(this.colour.red > this.colour.green && this.colour.red > this.colour.blue)
         {
-            this.redOutRate = Math.ceil((this.colour.red * this.size)/100);  
+            this.redOutRate = Math.ceil((this.colour.red * this.size)/10); 
+            this.greenOutRate = 0;
+            this.blueOutRate = 0; 
         }
-        if(this.colour.blue > 0)
+        else if(this.colour.blue > this.colour.green && this.colour.red > this.colour.red)
         {
-            this.blueOutRate = Math.ceil((this.colour.blue * this.size)/100); 
+            this.blueOutRate = Math.ceil((this.colour.blue * this.size)/10); 
+            this.greenOutRate = 0;
+            this.blueOutRate = 0;
         }
-         
-         if(this.colour.green > 0)
+        else if(this.colour.green > this.colour.blue && this.colour.red > this.colour.red)
         {
-            this.greenOutRate  = Math.ceil((this.colour.green * this.size)/100);   
+            this.greenOutRate  = Math.ceil((this.colour.green * this.size)/10); 
+            this.redOutRate = 0;
+            this.blueOutRate = 0;  
         }
          
         if(this.connectedNodes.length > 0)
@@ -292,22 +323,89 @@ var node = function(){
             }
 
 
-            if(this.redOutRate > this.blueOutRate && this.redOutRate > this.greenOutRate)
+            /*if(this.connectedNodes[cn].nodeObj.colour.blue > 0)
             {
-                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.redOutRate/10);
-                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.redOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.blueOutRate/2);
             }
-            if(this.blueOutRate > this.redOutRate && this.blueOutRate > this.greenOutRate)
+            if(this.connectedNodes[cn].nodeObj.colour.green > 0)
             {
-                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.blueOutRate/10);
-                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.blueOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.greenOutRate/2);
             }
-            if(this.greenOutRate > this.blueOutRate && this.greenOutRate > this.redOutRate)
+            if(this.connectedNodes[cn].nodeObj.colour.red > 0)
             {
-                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.greenOutRate/10);
-                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.greenOutRate/10);
+                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.redOutRate/2);
+            }*/
+
+            /*if(this.connectedNodes[cn].nodeObj.colour.blue > this.colour.blue)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.blue - Math.ceil(this.blueOutRate)) < this.colour.blue)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = this.colour.blue;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.blueOutRate);
+                }
             }
-            
+            else if (this.connectedNodes[cn].nodeObj.colour.blue < this.colour.blue)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.blue - Math.ceil(this.blueOutRate)) < this.colour.blue)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = this.colour.blue;
+                }
+               else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue += Math.ceil(this.blueOutRate);
+                }
+            }
+
+            if(this.connectedNodes[cn].nodeObj.colour.red > this.colour.red)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.red - Math.ceil(this.redOutRate)) < this.colour.red)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = this.colour.red;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.redOutRate);
+                }
+            }
+            else if (this.connectedNodes[cn].nodeObj.colour.red < this.colour.red)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.red - Math.ceil(this.redOutRate)) < this.colour.red)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = this.colour.red;
+                }
+               else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red += Math.ceil(this.redOutRate);
+                }
+            }
+
+            if(this.connectedNodes[cn].nodeObj.colour.green > this.colour.green)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.green - Math.ceil(this.greenOutRate)) < this.colour.green)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = this.colour.green;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.greenOutRate);
+                }
+            }
+            else if (this.connectedNodes[cn].nodeObj.colour.green < this.colour.green)
+            {
+                if((this.connectedNodes[cn].nodeObj.colour.green - Math.ceil(this.greenOutRate)) < this.colour.green)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = this.colour.green;
+                }
+               else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green += Math.ceil(this.greenOutRate);
+                
+                }
+            }
+            */
             
         }
     }
@@ -505,7 +603,6 @@ function toggleIds(isChecked)
 
 function pause()
 {
-    clearInterval(mainLoopID);
     clearInterval(gameTimerID);
 
     document.getElementById("pauseButton").setAttribute("onclick", "resetGame()");
