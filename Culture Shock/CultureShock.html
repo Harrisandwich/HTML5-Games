@@ -26,6 +26,17 @@
         <input type="checkbox" name="showIds" value="show" onchange="toggleIds(checked)"/>Show IDs
         <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div>
       </div>
+      <div style="left:auto; width:100%;right:auto;text-align:center;">
+        <a href="#" onclick="openAdvanced()" style="display:inline;" id="advancedLink">Advanced Options</a>
+      </div>
+      <div id="hidden-items" style="visibility:hidden;display:inline;">
+        <input type="range" id="outputMod"  min=1 max=200 onchange="modOutput(value)" style="display:inline;"/>Output Modifier:<div style="display:inline;" id="outputLabel"></div>%
+        <input type="range" id="reductionMod"  min=1 max=200 onchange="modReduction(value)" style="display:inline;"/>Reduction Modifier:<div style="display:inline;" id="reductionLabel"></div>%
+        <div style="left:auto; width:100%;right:auto;text-align:center;">
+          <a href="#" onclick="closeAdvanced()" style="display:inline;" id="closeLink">Close Advanced Options</a>
+        </div>
+      </div>
+      
     </div>
     <canvas id="myCanvas" width = "auto" height="auto" style="padding-left: 0;
     padding-right: 0;

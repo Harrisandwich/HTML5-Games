@@ -308,16 +308,18 @@ var node = function(){
        {
             if(mode =="normal")
             {
+                modifier = 1;
+                reductionModifier = 0.5;
                 if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
                 {
                     if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
                     {
-                        this.connectedNodes[cn].nodeObj.colour.blue = 255;
+                        this.connectedNodes[cn].nodeObj.colour.blue = 255  ;
 
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate;
+                        this.connectedNodes[cn].nodeObj.colour.blue += Math.floor(this.blueOutRate* modifier);
                     }
                 }
 
@@ -330,7 +332,7 @@ var node = function(){
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate;
+                        this.connectedNodes[cn].nodeObj.colour.red += Math.floor(this.redOutRate  * modifier);
                     }
                 }
 
@@ -343,7 +345,7 @@ var node = function(){
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate;
+                        this.connectedNodes[cn].nodeObj.colour.green += Math.floor(this.greenOutRate * modifier);
                     }
                 }
             
@@ -355,7 +357,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= this.blueOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.blueOutRate* reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.red - this.blueOutRate) < 0)
                 {
@@ -363,7 +365,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= this.blueOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.blueOutRate* reductionModifier);
                 }
 
                 if((this.connectedNodes[cn].nodeObj.colour.green - this.redOutRate) < 0)
@@ -372,7 +374,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= this.redOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.redOutRate  * reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.redOutRate) < 0)
                 {
@@ -380,7 +382,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= this.redOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.redOutRate  * reductionModifier);
                 }
 
 
@@ -390,7 +392,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= this.greenOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.greenOutRate * reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.greenOutRate) < 0)
                 {
@@ -398,21 +400,23 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= this.greenOutRate;
+                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.greenOutRate * reductionModifier);
                 }
             }
             else if(mode =="domination")
             {
+                modifier = 2;
+                reductionModifier = 2;
                 if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
                 {
                     if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
                     {
-                        this.connectedNodes[cn].nodeObj.colour.blue = 255;
+                        this.connectedNodes[cn].nodeObj.colour.blue = 255  ;
 
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate*2;
+                        this.connectedNodes[cn].nodeObj.colour.blue += Math.floor(this.blueOutRate* modifier);
                     }
                 }
 
@@ -425,7 +429,7 @@ var node = function(){
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate*2;
+                        this.connectedNodes[cn].nodeObj.colour.red += Math.floor(this.redOutRate  * modifier);
                     }
                 }
 
@@ -438,7 +442,7 @@ var node = function(){
                     }
                     else
                     {
-                        this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate*2;
+                        this.connectedNodes[cn].nodeObj.colour.green += Math.floor(this.greenOutRate * modifier);
                     }
                 }
             
@@ -450,7 +454,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= this.blueOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.blueOutRate* reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.red - this.blueOutRate) < 0)
                 {
@@ -458,7 +462,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= this.blueOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.blueOutRate* reductionModifier);
                 }
 
                 if((this.connectedNodes[cn].nodeObj.colour.green - this.redOutRate) < 0)
@@ -467,7 +471,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= this.redOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.redOutRate  * reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.redOutRate) < 0)
                 {
@@ -475,7 +479,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= this.redOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.redOutRate  * reductionModifier);
                 }
 
 
@@ -485,7 +489,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= this.greenOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.greenOutRate * reductionModifier);
                 }
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.greenOutRate) < 0)
                 {
@@ -493,7 +497,7 @@ var node = function(){
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= this.greenOutRate*2;
+                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.greenOutRate * reductionModifier);
                 }
             }
 
@@ -546,6 +550,8 @@ var nodes = new Array();
 var selectedColour = new colourObj();
 var scale = 0;
 var sizeScale = 1;
+var modifier = 1;
+var reductionModifier = 0.5;
 //listen for a mouse click
         
 canvas.addEventListener('mousedown', placeNode);
@@ -557,12 +563,18 @@ var showIds = false;
 var tickSpeed = 1000;
 var screenType = document.getElementById("screenSelect").value;
 var mode = document.getElementById("modeSelect").value;
+var paused = false;
 
 resetGame();
 
 function resetGame()
 {
+    paused = false;
     document.getElementById("speedLabel").innerHTML = tickSpeed;
+    document.getElementById("outputLabel").innerHTML = modifier*100;
+    document.getElementById("reductionLabel").innerHTML = reductionModifier*100;
+    document.getElementById("outputMod").value = modifier*100;
+    document.getElementById("reductionMod").value = reductionModifier*100;
     document.getElementById("pauseButton").setAttribute("onclick", "pause()");
     document.getElementById("pauseButton").setAttribute("value", "Pause");
     setColour(document.getElementById("colourSelect").value);
@@ -715,10 +727,22 @@ function changeType(value)
     if(value == "domination")
     {
         mode = "domination";
+        document.getElementById("outputLabel").innerHTML = 2 * 100;
+        document.getElementById("reductionLabel").innerHTML = 2 * 100;
+        document.getElementById("outputMod").value = 2 * 100;
+        document.getElementById("reductionMod").value = 2 * 100;
+        modifier = 2;
+        reductionModifier = 2;
     }
     else if (value == "normal")
     {
         mode = "normal";
+        document.getElementById("outputLabel").innerHTML = 1 * 100;
+        document.getElementById("reductionLabel").innerHTML = 0.5 * 100;
+        document.getElementById("outputMod").value = 1 * 100;
+        document.getElementById("reductionMod").value = 0.5 * 100;
+        modifier = 1;
+        reductionModifier = 0.5;
     }
 }
 
@@ -749,6 +773,7 @@ function toggleIds(isChecked)
 
 function pause()
 {
+    paused = true;
     clearInterval(gameTimerID);
 
     document.getElementById("pauseButton").setAttribute("onclick", "resetGame()");
@@ -883,6 +908,53 @@ function zoom(event)
             nodes[n].nodeObj.setScale();
         }
     }
+    else if(event.keyCode == 83)
+    {
+        //screen
+        if(document.getElementById("screenSelect").selectedIndex == document.getElementById("screenSelect").length - 1)
+        {
+            document.getElementById("screenSelect").selectedIndex = 0;
+            document.getElementById("screenSelect").onchange();
+        }
+        else
+        {
+            document.getElementById("screenSelect").selectedIndex += 1;
+            document.getElementById("screenSelect").onchange();
+        }
+         
+    }
+    else if(event.keyCode == 67)
+    {
+        //clear
+        clearNodes();
+    }
+    else if(event.keyCode == 80)
+    {
+        //pause
+        if(paused)
+        {
+            resetGame();
+        }
+        else
+        {
+            pause();
+        }
+        
+    }
+    else if(event.keyCode == 77)
+    {
+        //modes
+        if(document.getElementById("modeSelect").selectedIndex == document.getElementById("modeSelect").length - 1)
+        {
+            document.getElementById("modeSelect").selectedIndex = 0;
+            document.getElementById("modeSelect").onchange();
+        }
+        else
+        {
+            document.getElementById("modeSelect").selectedIndex += 1;
+            document.getElementById("modeSelect").onchange();
+        }
+    }
     else if(event.keyCode == 49)
     {
         document.getElementById("colourSelect").selectedIndex = 0; 
@@ -899,6 +971,31 @@ function zoom(event)
         document.getElementById("colourSelect").onchange();
     }
 
+}
+function openAdvanced()
+{
+    document.getElementById("menu-bar").style.height = "15vh";
+    document.getElementById("advancedLink").style.visibility = "hidden";
+    document.getElementById("hidden-items").style.visibility = "visible";
+
+}
+function closeAdvanced()
+{
+    document.getElementById("menu-bar").style.height = "8vh";
+    document.getElementById("advancedLink").style.visibility = "visible";
+    document.getElementById("hidden-items").style.visibility = "hidden";
+}
+
+function modOutput(value)
+{
+    document.getElementById("outputLabel").innerHTML = value;
+    modifier = value/100;
+
+}
+function modReduction(value)
+{
+    document.getElementById("reductionLabel").innerHTML = value;
+    reductionModifier = value/100;
 }
 function clearNodes()
 {
