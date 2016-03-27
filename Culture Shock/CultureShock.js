@@ -57,7 +57,10 @@ var node = function(){
     this.colour          = new colourObj(); //colour (rbg)  
     this.x               = 0; 
     this.y               = 0;
-    this.size            = 5.0;             //size (float)       
+    this.adjX            = getAdjustedPostion(this.x,this.y).x;
+    this.adjY            = getAdjustedPostion(this.x,this.y).y;
+    this.size            = 5.0;    
+    this.adjSize         = 5.0  * sizeScale;//size (float)       
     this.redOutRate      = 0;             //redOutRate (float)
     this.blueOutRate     = 0;             //blueOutRate (float)
     this.greenOutRate    = 0;             //greenOutRate (float)
@@ -147,10 +150,22 @@ var node = function(){
                  var newNode = new node();
                 newNode.x = point.x; 
                 newNode.y = point.y; 
-                newNode.colour.blue = this.colour.blue;
-                newNode.colour.red = this.colour.red;
-                newNode.colour.green = this.colour.green;
+
+                if(mode =="normal")
+                {
+                    newNode.colour.blue = this.colour.blue;
+                    newNode.colour.red = this.colour.red;
+                    newNode.colour.green = this.colour.green;
+                }
+                else if (mode =="domination")
+                {
+                    newNode.colour.blue = 255;
+                    newNode.colour.red = 255;
+                    newNode.colour.green = 255;
+                }
+                
                 newNode.size = this.size/2;
+                //newNode.adjSize = newNode.size;
                 do
                 {
                     newNode.id = Math.ceil(Math.random() * (10000 - 1) + 1);
@@ -231,25 +246,7 @@ var node = function(){
         
         var checkBool = false
         //NOTE: Im doing this check alot, move to function
-        if(this.colour.red > this.colour.green && this.colour.red > this.colour.blue)
-        {
-            this.redOutRate = Math.ceil((this.colour.red * this.size)/10); 
-            this.greenOutRate = 0;
-            this.blueOutRate = 0; 
-        }
-        else if(this.colour.blue > this.colour.green && this.colour.red > this.colour.red)
-        {
-            this.blueOutRate = Math.ceil((this.colour.blue * this.size)/10); 
-            this.greenOutRate = 0;
-            this.blueOutRate = 0;
-        }
-        else if(this.colour.green > this.colour.blue && this.colour.red > this.colour.red)
-        {
-            this.greenOutRate  = Math.ceil((this.colour.green * this.size)/10); 
-            this.redOutRate = 0;
-            this.blueOutRate = 0;  
-        }
-         
+        
         if(this.connectedNodes.length > 0)
         {
             for(cn in this.connectedNodes)
@@ -266,6 +263,7 @@ var node = function(){
         if(!checkBool)
         {
             this.size += this.growthRate;
+            this.adjSize = this.size * sizeScale;
         }
         
         
@@ -284,130 +282,227 @@ var node = function(){
 
 
         //send influence
-        for(cn in this.connectedNodes)
+       /*
+            A couple ways this could work:
+
+            - the node outputs a portion of each colour based on size. Each output reduces other colours based on
+            the amount. for example: blueout = 10. Blue goes up 10, green and red go down 10.
+       */
+        if(mode == "domination")
         {
-
-            if(this.connectedNodes[cn].nodeObj.colour.red < 255)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.red + this.redOutRate) > 255)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red = 255;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate;
-                }
-            }
-            if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue = 255;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate;
-                }
-            }
-            if(this.connectedNodes[cn].nodeObj.colour.green < 255)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.green + this.greenOutRate) > 255)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green = 255;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate;
-                }
-                
-            }
-
-
-            /*if(this.connectedNodes[cn].nodeObj.colour.blue > 0)
-            {
-                this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.blueOutRate/2);
-            }
-            if(this.connectedNodes[cn].nodeObj.colour.green > 0)
-            {
-                this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.greenOutRate/2);
-            }
-            if(this.connectedNodes[cn].nodeObj.colour.red > 0)
-            {
-                this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.redOutRate/2);
-            }*/
-
-            /*if(this.connectedNodes[cn].nodeObj.colour.blue > this.colour.blue)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.blue - Math.ceil(this.blueOutRate)) < this.colour.blue)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue = this.colour.blue;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.ceil(this.blueOutRate);
-                }
-            }
-            else if (this.connectedNodes[cn].nodeObj.colour.blue < this.colour.blue)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.blue - Math.ceil(this.blueOutRate)) < this.colour.blue)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue = this.colour.blue;
-                }
-               else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.blue += Math.ceil(this.blueOutRate);
-                }
-            }
-
-            if(this.connectedNodes[cn].nodeObj.colour.red > this.colour.red)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.red - Math.ceil(this.redOutRate)) < this.colour.red)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red = this.colour.red;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red -= Math.ceil(this.redOutRate);
-                }
-            }
-            else if (this.connectedNodes[cn].nodeObj.colour.red < this.colour.red)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.red - Math.ceil(this.redOutRate)) < this.colour.red)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red = this.colour.red;
-                }
-               else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.red += Math.ceil(this.redOutRate);
-                }
-            }
-
-            if(this.connectedNodes[cn].nodeObj.colour.green > this.colour.green)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.green - Math.ceil(this.greenOutRate)) < this.colour.green)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green = this.colour.green;
-                }
-                else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green -= Math.ceil(this.greenOutRate);
-                }
-            }
-            else if (this.connectedNodes[cn].nodeObj.colour.green < this.colour.green)
-            {
-                if((this.connectedNodes[cn].nodeObj.colour.green - Math.ceil(this.greenOutRate)) < this.colour.green)
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green = this.colour.green;
-                }
-               else
-                {
-                    this.connectedNodes[cn].nodeObj.colour.green += Math.ceil(this.greenOutRate);
-                
-                }
-            }
-            */
-            
+            this.redOutRate = Math.ceil(this.colour.red * this.size/100) * 2;
+            this.blueOutRate = Math.ceil(this.colour.blue * this.size/100) * 2;
+            this.greenOutRate = Math.ceil(this.colour.green * this.size/100)  * 2;
         }
+        else if (mode == "normal")
+        {
+            this.redOutRate = Math.ceil(this.colour.red * this.size/100);
+            this.blueOutRate = Math.ceil(this.colour.blue * this.size/100);
+            this.greenOutRate = Math.ceil(this.colour.green * this.size/100);
+        }
+        
+       
+
+
+       for(cn in this.connectedNodes)
+       {
+            if(mode =="normal")
+            {
+                if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate;
+                    }
+                }
+
+                if(this.connectedNodes[cn].nodeObj.colour.red < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.red + this.redOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.red = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate;
+                    }
+                }
+
+                if(this.connectedNodes[cn].nodeObj.colour.green < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.green + this.greenOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.green = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate;
+                    }
+                }
+            
+
+
+                if((this.connectedNodes[cn].nodeObj.colour.green - this.blueOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green -= this.blueOutRate;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.red - this.blueOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red -= this.blueOutRate;
+                }
+
+                if((this.connectedNodes[cn].nodeObj.colour.green - this.redOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green -= this.redOutRate;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.blue - this.redOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue -= this.redOutRate;
+                }
+
+
+                if((this.connectedNodes[cn].nodeObj.colour.red - this.greenOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red -= this.greenOutRate;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.blue - this.greenOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue -= this.greenOutRate;
+                }
+            }
+            else if(mode =="domination")
+            {
+                if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue += this.blueOutRate*2;
+                    }
+                }
+
+                if(this.connectedNodes[cn].nodeObj.colour.red < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.red + this.redOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.red = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.red += this.redOutRate*2;
+                    }
+                }
+
+                if(this.connectedNodes[cn].nodeObj.colour.green < 255)
+                {
+                    if((this.connectedNodes[cn].nodeObj.colour.green + this.greenOutRate) > 255)
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.green = 255;
+
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.green += this.greenOutRate*2;
+                    }
+                }
+            
+
+
+                if((this.connectedNodes[cn].nodeObj.colour.green - this.blueOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green -= this.blueOutRate*2;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.red - this.blueOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red -= this.blueOutRate*2;
+                }
+
+                if((this.connectedNodes[cn].nodeObj.colour.green - this.redOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.green -= this.redOutRate*2;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.blue - this.redOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue -= this.redOutRate*2;
+                }
+
+
+                if((this.connectedNodes[cn].nodeObj.colour.red - this.greenOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.red -= this.greenOutRate*2;
+                }
+                if((this.connectedNodes[cn].nodeObj.colour.blue - this.greenOutRate) < 0)
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue = 0;
+                }
+                else
+                {
+                    this.connectedNodes[cn].nodeObj.colour.blue -= this.greenOutRate*2;
+                }
+            }
+
+       }
+       /*
+            - Each new node is white and slowly get acclimated to connected nodes. 
+       */
+
+        
     }
     //draw
     this.draw = function()
@@ -416,6 +511,8 @@ var node = function(){
         //NOTE: I should make the lines slightly transparent so overlapping lines merge into one colour OR even better, 
         //TWO lines between nodes. It would look cool
         //Maybe move this to a manager 
+        
+        //drawCircle(this.adjX,this.adjY,this.adjSize,this.colour.getString());
         drawCircle(this.x,this.y,this.size,this.colour.getString());
         if(showIds)
         {
@@ -430,13 +527,25 @@ var node = function(){
     {
         //this happens when this node is first born. triggered by the parent node
     }
+    this.setScale = function()
+    {
+        this.adjSize = this.size * sizeScale;
+        this.adjX = getAdjustedPostion(this.x,this.y).x;
+        this.adjY = getAdjustedPostion(this.x,this.y).y;
+
+
+        
+
+        
+    }
 };
 
 
 
 var nodes = new Array();
 var selectedColour = new colourObj();
-var scale = 1;
+var scale = 0;
+var sizeScale = 1;
 //listen for a mouse click
         
 canvas.addEventListener('mousedown', placeNode);
@@ -446,6 +555,8 @@ var mainLoopID;
 var gameTimerID;
 var showIds = false;
 var tickSpeed = 1000;
+var screenType = document.getElementById("screenSelect").value;
+var mode = document.getElementById("modeSelect").value;
 
 resetGame();
 
@@ -502,8 +613,19 @@ function drawBackground()
         window.addEventListener('resize', resizeCanvas, false);
         
         function resizeCanvas() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+
+                if(screenType == "square")
+                {
+                     canvas.width = window.innerWidth/2;
+                    canvas.height = canvas.width;
+                
+                }
+                else if (screenType == "full")
+                {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                
                 
                 /**
                  * Your drawings need to be inside this function otherwise they will be reset when 
@@ -588,6 +710,30 @@ function setColour(value)
     }
 }
 
+function changeType(value)
+{
+    if(value == "domination")
+    {
+        mode = "domination";
+    }
+    else if (value == "normal")
+    {
+        mode = "normal";
+    }
+}
+
+function changeScreen(value)
+{
+    if(value == "full")
+    {
+        screenType = "full";
+    }
+    else if (value == "square")
+    {
+        screenType = "square";
+    }
+}
+
 function setSpeed(value)
 {
     tickSpeed = 1000/value;
@@ -614,6 +760,7 @@ function placeNode(event)
     //this is activated by a click. It checks the active node type and places a node at the mouse position
     var newNode = new node();
     var rect = canvas.getBoundingClientRect();
+    var clickPoint = {x:event.clientX - rect.left, y:event.clientY - rect.top}
     newNode.x = event.clientX - rect.left;
     newNode.y = event.clientY - rect.top; 
     newNode.colour.blue = selectedColour.blue;
@@ -654,22 +801,109 @@ function getRandomPoint(radius) {
         y: Math.sin(angle) * radius
     };
 }
+function getAdjustedPostion(objX,objY)
+{
+    var point = {x:objX,y:objY};
+    var canvasCenter = {x: canvas.width/2, y: canvas.height/2};
+    if(point.x > canvasCenter.x)
+    {
+        point.x -= scale;
+    }
+    else  if(point.x < canvasCenter.x)
+    {
+        point.x += scale;
+    }
+    if(point.y > canvasCenter.y)
+    {
+        point.y -= scale;
+    }
+    else if(point.y < canvasCenter.y)
+    {
+        point.y += scale;
+    }
+
+    return point;
+}
 
 function zoom(event)
 {
 
     //this might help with scaling http://stackoverflow.com/questions/6775168/zooming-with-canvas
+    console.log(event.keyCode);
     if(event.keyCode == 90)
     {   
-        scale += 0.05;
+        if(scale < 0)
+        {
+            scale *= -1;
+        }
+        if((scale + 1) > 12)
+        {
+            scale = 12;
+        }
+        else
+        {
+            scale += 1;
+        }
+
+        
+        sizeScale += 0.01;
+        for(n in nodes)
+        {
+            nodes[n].nodeObj.setScale();
+        }
     }
     else if(event.keyCode == 88)
     {
-        scale -= 0.05;
+
+        if(scale < 0)
+        {
+            scale *= -1;
+        }
+        if((scale - 1) < 0)
+        {
+            scale = 0;
+        }
+        else
+        {
+            scale -= 1;
+        }
+  
+        
+        if((sizeScale - 0.01) < 0)
+        {
+            sizeScale = 0.01;
+        }
+        else
+        {
+            sizeScale -= 0.01;
+        }
+        
+        for(n in nodes)
+        {
+            nodes[n].nodeObj.setScale();
+        }
+    }
+    else if(event.keyCode == 49)
+    {
+        document.getElementById("colourSelect").selectedIndex = 0; 
+        document.getElementById("colourSelect").onchange();
+    }
+    else if(event.keyCode == 50)
+    {
+        document.getElementById("colourSelect").selectedIndex = 1;
+        document.getElementById("colourSelect").onchange();
+    }
+    else if(event.keyCode == 51)
+    {
+        document.getElementById("colourSelect").selectedIndex = 2;
+        document.getElementById("colourSelect").onchange();
     }
 
 }
-
+function clearNodes()
+{
+    nodes = new Array();
+}
 function drawLine(start,end,lnWidth,strokeColour)
 {
     
@@ -691,11 +925,9 @@ function drawTinyText(text,textX,textY,drawColor)
 //check for optional paramenter or overloaded function options for JS
 function drawCircle(leftX, topY, diameter,fillColor)
 {
-    canvasContext.scale(scale,scale);
     canvasContext.strokeStyle = fillColor;
     canvasContext.fillStyle = fillColor;
     canvasContext.beginPath();
-    
     //draw arc
     canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
     canvasContext.fill();

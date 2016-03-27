@@ -13,15 +13,24 @@
           <option value="red">Red</option>
           <option value="green">Green</option>
         </select>
+        <select onchange="changeScreen(value)" id="screenSelect">
+          <option value="square">Square</option>
+          <option value="full">Full Screen</option>
+        </select>
+         <select onchange="changeType(value)" id="modeSelect">
+          <option value="normal">Normal</option>
+          <option value="domination">Domination</option>
+        </select>
         <input type="button" value="Pause" id="pauseButton"/>
+        <input type="button" value="Clear" id="clearButton" onclick="clearNodes()"/>
         <input type="checkbox" name="showIds" value="show" onchange="toggleIds(checked)"/>Show IDs
         <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div>
       </div>
     </div>
     <canvas id="myCanvas" width = "auto" height="auto" style="padding-left: 0;
     padding-right: 0;
-    margin-left: 0;
-    margin-right: 0;
+    margin-left: auto;
+    margin-right: auto;
     display: block;
     background-color: black">
    
