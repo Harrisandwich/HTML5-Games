@@ -571,10 +571,10 @@ function resetGame()
 {
     paused = false;
     document.getElementById("speedLabel").innerHTML = tickSpeed;
-    document.getElementById("outputLabel").innerHTML = modifier*100;
+    /*document.getElementById("outputLabel").innerHTML = modifier*100;
     document.getElementById("reductionLabel").innerHTML = reductionModifier*100;
     document.getElementById("outputMod").value = modifier*100;
-    document.getElementById("reductionMod").value = reductionModifier*100;
+    document.getElementById("reductionMod").value = reductionModifier*100;*/
     document.getElementById("pauseButton").setAttribute("onclick", "pause()");
     document.getElementById("pauseButton").setAttribute("value", "Pause");
     setColour(document.getElementById("colourSelect").value);
@@ -727,22 +727,22 @@ function changeType(value)
     if(value == "domination")
     {
         mode = "domination";
-        document.getElementById("outputLabel").innerHTML = 2 * 100;
+        /*document.getElementById("outputLabel").innerHTML = 2 * 100;
         document.getElementById("reductionLabel").innerHTML = 2 * 100;
         document.getElementById("outputMod").value = 2 * 100;
         document.getElementById("reductionMod").value = 2 * 100;
         modifier = 2;
-        reductionModifier = 2;
+        reductionModifier = 2;*/
     }
     else if (value == "normal")
     {
         mode = "normal";
-        document.getElementById("outputLabel").innerHTML = 1 * 100;
+        /*document.getElementById("outputLabel").innerHTML = 1 * 100;
         document.getElementById("reductionLabel").innerHTML = 0.5 * 100;
         document.getElementById("outputMod").value = 1 * 100;
         document.getElementById("reductionMod").value = 0.5 * 100;
         modifier = 1;
-        reductionModifier = 0.5;
+        reductionModifier = 0.5;*/
     }
 }
 
