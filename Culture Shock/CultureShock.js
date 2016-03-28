@@ -60,10 +60,14 @@ var node = function(){
     this.adjX            = getAdjustedPostion(this.x,this.y).x;
     this.adjY            = getAdjustedPostion(this.x,this.y).y;
     this.size            = 5.0;    
-    this.adjSize         = 5.0  * sizeScale;//size (float)       
+    this.adjSize         = 5.0  * sizeScale;//size (float)   
+
     this.redOutRate      = 0;             //redOutRate (float)
     this.blueOutRate     = 0;             //blueOutRate (float)
     this.greenOutRate    = 0;             //greenOutRate (float)
+    this.redBonusOut     = 0;
+    this.greenBonusOut   = 0;
+    this.blueBonusOut    = 0;
     //growthRate (float)
     //this will either be variable or a global constant
     //this.growthRate = 0.0;
@@ -93,7 +97,6 @@ var node = function(){
             var badPlacementCount = 0;
             do
             {
-                console.log("Placement Check: Start");
                 badPlacementCount ++;
                 badPlacement = false;
                 point = getRandomPoint(this.size/2 + 150);
@@ -111,10 +114,9 @@ var node = function(){
 
                 if(!badPlacement)
                 {
-                    console.log("Placement Check: Point Within Area");
+
                     for(n in nodes)
                     {
-                        console.log("Placement Check: Checking distance from other nodes");
                         if(getDistance(point,nodes[n].nodeObj) <= 25)
                         {
                             badPlacement = true;
@@ -290,9 +292,9 @@ var node = function(){
        */
         if(mode == "domination")
         {
-            this.redOutRate = Math.ceil(this.colour.red * this.size/100) * 2;
-            this.blueOutRate = Math.ceil(this.colour.blue * this.size/100) * 2;
-            this.greenOutRate = Math.ceil(this.colour.green * this.size/100)  * 2;
+            this.redOutRate = Math.ceil((this.colour.red + this.redBonusOut) * this.size/100);
+            this.blueOutRate = Math.ceil((this.colour.blue + this.blueBonusOut) * this.size/100);
+            this.greenOutRate = Math.ceil((this.colour.green + this.greenBonusOut) * this.size/100);
         }
         else if (mode == "normal")
         {
@@ -405,13 +407,14 @@ var node = function(){
             }
             else if(mode =="domination")
             {
-                modifier = 2;
-                reductionModifier = 2;
+                modifier = 1;
+                reductionModifier = 0.5;
                 if(this.connectedNodes[cn].nodeObj.colour.blue < 255)
                 {
                     if((this.connectedNodes[cn].nodeObj.colour.blue + this.blueOutRate) > 255)
                     {
-                        this.connectedNodes[cn].nodeObj.colour.blue = 255  ;
+                        this.connectedNodes[cn].nodeObj.colour.blue = 255;
+                        this.connectedNodes[cn].nodeObj.blueBonusOut += this.blueOutRate;
 
                     }
                     else
@@ -425,6 +428,7 @@ var node = function(){
                     if((this.connectedNodes[cn].nodeObj.colour.red + this.redOutRate) > 255)
                     {
                         this.connectedNodes[cn].nodeObj.colour.red = 255;
+                        this.connectedNodes[cn].nodeObj.redBonusOut += this.redOutRate;
 
                     }
                     else
@@ -438,6 +442,7 @@ var node = function(){
                     if((this.connectedNodes[cn].nodeObj.colour.green + this.greenOutRate) > 255)
                     {
                         this.connectedNodes[cn].nodeObj.colour.green = 255;
+                        this.connectedNodes[cn].nodeObj.greenBonusOut += this.greenOutRate;
 
                     }
                     else
@@ -447,57 +452,102 @@ var node = function(){
                 }
             
 
-
+                //green - blue
                 if((this.connectedNodes[cn].nodeObj.colour.green - this.blueOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.green = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.blueOutRate* reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.greenBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.greenBonusOut -= Math.floor(this.blueOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                       this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.blueOutRate* reductionModifier); 
+                    }
+                    
                 }
+                //red - blue
                 if((this.connectedNodes[cn].nodeObj.colour.red - this.blueOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.red = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.blueOutRate* reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.redBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.redBonusOut -= Math.floor(this.blueOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                       this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.blueOutRate* reductionModifier); 
+                    }
                 }
-
+                //green - red
                 if((this.connectedNodes[cn].nodeObj.colour.green - this.redOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.green = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.redOutRate  * reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.greenBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.greenBonusOut -= Math.floor(this.redOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                       this.connectedNodes[cn].nodeObj.colour.green -= Math.floor(this.redOutRate* reductionModifier); 
+                    }
                 }
+                //blue - red
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.redOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.blue = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.redOutRate  * reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.blueBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.blueBonusOut -= Math.floor(this.redOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.redOutRate  * reductionModifier);
+                    }
                 }
-
-
+                //red - green
                 if((this.connectedNodes[cn].nodeObj.colour.red - this.greenOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.red = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.greenOutRate * reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.redBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.redBonusOut -= Math.floor(this.greenOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.red -= Math.floor(this.greenOutRate * reductionModifier);
+                    }
                 }
+                //blue - green
                 if((this.connectedNodes[cn].nodeObj.colour.blue - this.greenOutRate) < 0)
                 {
                     this.connectedNodes[cn].nodeObj.colour.blue = 0;
                 }
                 else
                 {
-                    this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.greenOutRate * reductionModifier);
+                    if(this.connectedNodes[cn].nodeObj.blueBonusOut > 0)
+                    {
+                        this.connectedNodes[cn].nodeObj.blueBonusOut -= Math.floor(this.greenOutRate* reductionModifier);
+                    }
+                    else
+                    {
+                        this.connectedNodes[cn].nodeObj.colour.blue -= Math.floor(this.greenOutRate * reductionModifier);
+                    }
                 }
             }
 
@@ -854,7 +904,6 @@ function zoom(event)
 {
 
     //this might help with scaling http://stackoverflow.com/questions/6775168/zooming-with-canvas
-    console.log(event.keyCode);
     if(event.keyCode == 90)
     {   
         if(scale < 0)
