@@ -18,6 +18,7 @@ var playerCharacter;
 
 var characters;
 var items;
+var enemies;
 var obsticles;
 var debugObj;
 
@@ -65,7 +66,6 @@ var character = function ()
 	};
 	this.update = function()
 	{
-		debugObj.trace(this.xv);
 		if(this.xv < this.mXV && this.moveFlags.right)
 		{
 			this.xv += this.speed;
@@ -125,6 +125,119 @@ var character = function ()
 		
 	}
 };
+
+var enemy = function()
+{
+	this.x = 0;
+	this.y = 0;
+	this.xv = 0;
+	this.yv = 0;
+	this.mXV = 20;
+	this.mYV = 20;
+	this.speed = 0.3;
+	this.friction = 0.1;
+	this.size = 0;
+	this.type = "type";
+	this.damage = 0;
+	this.playerX = 0;
+	this.playerY = 0;
+
+	this.moveFlags = {up:false,down:false,left:false,right:false}
+	this.draw = function()
+	{
+		drawCircle(this.x,this.y,this.size, "Red");
+	}
+	this.update = function()
+	{
+		if(this.xv < this.mXV && this.moveFlags.right)
+		{
+			this.xv += this.speed;
+		}
+		if(this.xv > -this.mXV && this.moveFlags.left)
+		{
+			this.xv += this.speed * -1;
+		}
+		if (this.xv > this.mXV)
+		{
+			this.xv = this.mXV;
+		}
+
+		if(this.yv < this.mYV && this.moveFlags.down)
+		{
+			this.yv += this.speed;
+		}
+
+		else if(this.yv > -this.mYV && this.moveFlags.up)
+		{
+			this.yv += this.speed * -1;
+		}
+		else if (this.yv > this.myV)
+		{
+			this.yv = this.myV;
+		}
+
+
+
+		this.x += this.xv;
+		this.y += this.yv;
+
+		
+
+			if(this.xv > 0)
+			{
+				this.xv -= this.friction;
+			}
+			else if (this.xv < 0)
+			{
+				this.xv += this.friction;
+			}
+			
+			
+		
+			if(this.yv > 0)
+			{
+				this.yv -= this.friction;
+			}
+			else if (this.yv < 0) 
+			{
+				this.yv += this.friction;
+			}
+			
+
+	}
+
+	this.getPlayer = function(playerX, playerY)
+	{
+		this.playerX = playerX;
+		this.playerY = playerY;
+		this.setDirection();
+	}
+	this.setDirection = function()
+	{
+		if(this.playerX > this.x)
+		{
+			this.moveFlags.right = true;
+			this.moveFlags.left = false;
+		}
+		else if(this.playerX < this.x)
+		{
+			this.moveFlags.right = false;
+			this.moveFlags.left = true;
+		}
+
+		if(this.playerY > this.y)
+		{
+			this.moveFlags.up = false;
+			this.moveFlags.down = true;
+		}
+		else if(this.playerY < this.y)
+		{
+			this.moveFlags.up = true;
+			this.moveFlags.down = false;
+		}
+
+	}
+}
 
 var pickup = function ()
 {
@@ -282,6 +395,7 @@ resetGame();
 function resetGame()
 {
 	debugObj.trace("Game reset start");
+	debugObj.debugFlag = false;
 	playerCharacter = new character();
 	playerCharacter.x = canvas.width/2;
 	playerCharacter.y = canvas.height/2;
@@ -295,12 +409,13 @@ function resetGame()
 	particleEngine.construct(canvas,canvasContext,FRAMES_PER_SECOND);
 	
 	characters = new Array();
+	enemies = new Array();
 	items = new Array();
 	obsticles = new Array();
 
 
 
-	var ob1 = new obsticle();
+	/*var ob1 = new obsticle();
 	ob1.type = "speed";
 	ob1.x = 0;
 	ob1.y = 0;
@@ -334,13 +449,37 @@ function resetGame()
 	ob4.width = 50;
 	ob4.height = 100;
 
-	obsticles.push(ob4);
+	obsticles.push(ob4);*/
+
+	var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);
+	var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);
+	var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);
 
 	
 	
 	setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
 	setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
-	setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
+	//setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
 	
 
 }
@@ -365,12 +504,25 @@ function spawnItems()
 	items.push(newItem);
 }
 
+function spawnEnemies()
+{
+	var newEnemy = new enemy();
+	newEnemy.size = 3;
+	newEnemy.x = Math.random() * canvas.width;
+	newEnemy.y = Math.random() * canvas.height;
+	enemies.push(newEnemy);
+}
+
 function drawEverything()
 {
 	drawRect(0, 0, canvas.width, canvas.height, "Black");
 	for(ob in obsticles)
 	{
 		obsticles[ob].draw();
+	}
+	for(e in enemies)
+	{
+		enemies[e].draw();
 	}
 	playerCharacter.draw();
 	drawMidText((gameTimer/SECOND_IN_MILISECONDS),20,40,"white");
@@ -390,6 +542,11 @@ function updateEverything()
 {
 
 	playerCharacter.update();
+	for(e in enemies)
+	{
+		enemies[e].getPlayer(playerCharacter.x,playerCharacter.y);
+		enemies[e].update();
+	}
 	checkCollisions();
 
 	particleEngine.updateEverything();
@@ -428,6 +585,7 @@ function pickupParticleEffect(item)
 
 function checkWallCollide()
 {
+	//--------Player--------//
 	//check  collisions with wall
 	if(((playerCharacter.x + playerCharacter.size) >= canvas.width) || ((playerCharacter.x - playerCharacter.size) <= 0))
 	{
@@ -476,6 +634,31 @@ function checkWallCollide()
 				playerCharacter.xv = playerCharacter.xv * -1;
 			}
 			
+		}
+	}
+
+	//------Enemies-------//
+	for(e in enemies)
+	{
+		//check  collisions with wall
+		if(((enemies[e].x + enemies[e].size) >= canvas.width) || ((enemies[e].x - enemies[e].size) <= 0))
+		{
+
+			enemies[e].xv = enemies[e].xv * -1;
+
+			//trigger particle effect
+			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
+			particleEngine.spark(255,0,0,enemies[e].x,enemies[e].y)
+		}
+		
+		if(((enemies[e].y + enemies[e].size) >= canvas.height) || ((enemies[e].y - enemies[e].size) <= 0))
+		{
+
+			enemies[e].yv = enemies[e].yv * -1;
+
+			//trigger particle effect
+			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
+			particleEngine.spark(255,0,0,enemies[e].x,enemies[e].y)
 		}
 	}
 
