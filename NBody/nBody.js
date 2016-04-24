@@ -18,7 +18,7 @@ var playerCharacter;
 
 var characters;
 var items;
-var enemies;
+var bodies;
 var obsticles;
 var debugObj;
 
@@ -56,12 +56,19 @@ var character = function ()
 	this.speed = 0.5;
 	this.friction = 0.1;
 	this.size = 10;
+	this.colour = new colourObj();
+
+	this.colour.red = 255;
+	this.colour.blue = 255;
+	this.colour.green = 255; 
+
+	this.colour.alpha = 0.6;
 
 	this.moveFlags = {up:false,down:false,left:false,right:false}
 	this.draw = function ()
 	{	
 
-		drawCircle(this.x, this.y, this.size,"White");
+		drawCircle(this.x, this.y, this.size,this.colour.getString());
 		 
 	};
 	this.update = function()
@@ -131,46 +138,58 @@ var trail = function()
 	this.x = 0;
 	this.y = 0;
 	this.size = 1;
-	this.colour = new colourObj;
+	this.colour = new colourObj();
 
 	this.draw = function()
 	{
-		drawCircle(this.x,this.y,this.size, "Red");
+		drawCircle(this.x,this.y,this.size, this.colour.getString());
 	}
 
+	this.setColour = function(cObj)
+	{
+		this.colour = cObj;
+	}
 	this.update = function()
 	{
 
 	}
 }
 
-var enemy = function()
+var nBody = function()
 {
 	this.x = 0;
 	this.y = 0;
 	this.xv = 0;
 	this.yv = 0;
-	this.mXV = 20;
-	this.mYV = 20;
-	this.speed = 0.1;
-	this.friction = 0.01;
+	this.mXV = 10;
+	this.mYV = 10;
+	this.speed = 0.05;
+	this.friction = 0.0;
 	this.size = 0;
 	this.type = "type";
 	this.damage = 0;
 	this.playerX = 0;
 	this.playerY = 0;
-	this.trail = new Array();
+	this.trails = new Array();
+	this.trailLength = 200;
+
+	this.redToGreen = true;
+	this.greenToBlue = false;
+	this.blueToRed = false;
 
 	this.colour = new colourObj;
+	this.colour.blue = 0;
+	this.colour.red = 255;
+	this.colour.green  = 0;
 
 	this.moveFlags = {up:false,down:false,left:false,right:false}
 	this.draw = function()
 	{
-		drawCircle(this.x,this.y,this.size, "Red");
+		drawCircle(this.x,this.y,this.size, this.colour.getString());
 
-		for(seg in this.trail)
+		for(seg in this.trails)
 		{
-			this.trail[seg].draw();
+			this.trails[seg].draw();
 		}
 	}
 	this.update = function()
@@ -229,22 +248,73 @@ var enemy = function()
 			this.yv += this.friction;
 		}
 
+		/*if(this.xv <= 1 && this.yv <= 1)
+		{
+			if(this.zIndex == 0)
+			{
+				this.zIndex = 2;
+			}
+		}*/
+
+		if(this.colour.red == 255 && this.colour.green == 0)
+		{
+			this.redToGreen = true;
+			this.greenToBlue = false;
+			this.blueToRed = false;
+		}
+		else if(this.colour.green == 255 && this.colour.blue == 0)
+		{
+			this.redToGreen = false;
+			this.greenToBlue = true;
+			this.blueToRed = false;
+		}
+		else if(this.colour.blue == 255 && this.colour.red == 0)
+		{
+			this.redToGreen = false;
+			this.greenToBlue = false;
+			this.blueToRed = true;
+		}
+
 		
 
-		if(this.trail.length <= 200)
+		if(this.redToGreen)
+		{
+			this.colour.red -= 1;
+			this.colour.green += 1;
+		}
+		else if(this.greenToBlue)
+		{
+			this.colour.green -= 1;
+			this.colour.blue += 1;
+		}
+		if(this.blueToRed)
+		{
+			this.colour.blue -= 1;
+			this.colour.red += 1;
+		}
+
+		if(this.trails.length <= this.trailLength)
 		{
 			var trailseg = new trail();
 			trailseg.x = this.x;
 			trailseg.y = this.y;
-			this.trail.push(trailseg);
+			trailseg.colour.red = this.colour.red;
+			trailseg.colour.blue = this.colour.blue;
+			trailseg.colour.green = this.colour.green;
+
+			this.trails.push(trailseg);
 		}
 		else
 		{
-			this.trail.splice(0,1);
+			
 			var trailseg = new trail();
 			trailseg.x = this.x;
 			trailseg.y = this.y;
-			this.trail.push(trailseg);
+			trailseg.colour.red = this.colour.red;
+			trailseg.colour.blue = this.colour.blue;
+			trailseg.colour.green = this.colour.green;
+			this.trails.push(trailseg);
+			this.trails.splice(0,1);
 
 		}
 		
@@ -375,6 +445,7 @@ window.addEventListener('keyup',function(event){
 
 function keyupListener(event)
 {
+	event.preventDefault();
 	switch(event.keyCode)	
 			{
 				case 37:
@@ -394,7 +465,7 @@ function keyupListener(event)
 function checkKey(event)
 {		
 		
-		
+		event.preventDefault();
 		if(event.keyCode == 37)
 		{
 			playerCharacter.moveFlags.left = true;
@@ -440,6 +511,10 @@ resetGame();
 
 function resetGame()
 {
+	drawBackground();
+	setSpeed(0.1);
+	setFriction(0.01);
+	setTrail(200);
 	debugObj.trace("Game reset start");
 	debugObj.debugFlag = false;
 	playerCharacter = new character();
@@ -455,7 +530,7 @@ function resetGame()
 	particleEngine.construct(canvas,canvasContext,FRAMES_PER_SECOND);
 	
 	characters = new Array();
-	enemies = new Array();
+	bodies = new Array();
 	items = new Array();
 	obsticles = new Array();
 
@@ -497,106 +572,24 @@ function resetGame()
 
 	obsticles.push(ob4);*/
 
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
+	resetBodies(30);
 
 	
 	
 	setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
-	setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
+	//setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
 	//setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
 	
 
+}
+function resetBodies(amount)
+{
+	bodies = new Array();
+
+	for(var i = 0; i < amount; i++)
+	{
+		spawnBody();
+	}
 }
 
 function mainLoop()
@@ -619,28 +612,28 @@ function spawnItems()
 	items.push(newItem);
 }
 
-function spawnEnemies()
+function spawnBody()
 {
-	var newEnemy = new enemy();
-	newEnemy.size = 3;
-	newEnemy.x = Math.random() * canvas.width;
-	newEnemy.y = Math.random() * canvas.height;
-	enemies.push(newEnemy);
+	var newBody = new nBody();
+	newBody.size = 3;
+	newBody.x = Math.random() * canvas.width;
+	newBody.y = Math.random() * canvas.height;
+	bodies.push(newBody);
 }
 
 function drawEverything()
 {
-	drawRect(0, 0, canvas.width, canvas.height, "Black");
+	drawBackground();
 	for(ob in obsticles)
 	{
 		obsticles[ob].draw();
 	}
-	for(e in enemies)
+	for(e in bodies)
 	{
-		enemies[e].draw();
+		bodies[e].draw();
 	}
 	playerCharacter.draw();
-	drawMidText((gameTimer/SECOND_IN_MILISECONDS),20,40,"white");
+	//drawMidText((gameTimer/SECOND_IN_MILISECONDS),20,40,"white");
 
 
 	
@@ -657,10 +650,10 @@ function updateEverything()
 {
 
 	playerCharacter.update();
-	for(e in enemies)
+	for(e in bodies)
 	{
-		enemies[e].getPlayer(playerCharacter.x,playerCharacter.y);
-		enemies[e].update();
+		bodies[e].getPlayer(playerCharacter.x,playerCharacter.y);
+		bodies[e].update();
 	}
 	checkCollisions();
 
@@ -694,7 +687,7 @@ function checkCollisions()
 
 function pickupParticleEffect(item)
 {
-	//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
+	//colorRed,colorGreen,colorBlue,duration, framesPerSecond,bodiesize,maxNumbodies,startX,startY,particleLifespan,spawnRate,type,width)
 		particleEngine.spark(255,255,0,item.x,item.y);
 }
 
@@ -708,7 +701,7 @@ function checkWallCollide()
 		playerCharacter.xv = playerCharacter.xv * -1;
 
 		//trigger particle effect
-		//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
+		//colorRed,colorGreen,colorBlue,duration, framesPerSecond,bodiesize,maxNumbodies,startX,startY,particleLifespan,spawnRate,type,width)
 		particleEngine.spark(255,255,255,playerCharacter.x,playerCharacter.y)
 	}
 	
@@ -718,7 +711,7 @@ function checkWallCollide()
 		playerCharacter.yv = playerCharacter.yv * -1;
 
 		//trigger particle effect
-		//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
+		//colorRed,colorGreen,colorBlue,duration, framesPerSecond,bodiesize,maxNumbodies,startX,startY,particleLifespan,spawnRate,type,width)
 		particleEngine.spark(255,255,255,playerCharacter.x,playerCharacter.y)
 	}
 
@@ -752,28 +745,28 @@ function checkWallCollide()
 		}
 	}
 
-	//------Enemies-------//
-	for(e in enemies)
+	//------bodies-------//
+	for(e in bodies)
 	{
 		//check  collisions with wall
-		if(((enemies[e].x + enemies[e].size) >= canvas.width) || ((enemies[e].x - enemies[e].size) <= 0))
+		if(((bodies[e].x + bodies[e].size) >= canvas.width) || ((bodies[e].x - bodies[e].size) <= 0))
 		{
 
-			enemies[e].xv = enemies[e].xv * -1;
+			bodies[e].xv = bodies[e].xv * -1;
 
 			//trigger particle effect
-			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
-			particleEngine.spark(255,0,0,enemies[e].x,enemies[e].y)
+			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,bodiesize,maxNumbodies,startX,startY,particleLifespan,spawnRate,type,width)
+			particleEngine.spark(255,0,0,bodies[e].x,bodies[e].y)
 		}
 		
-		if(((enemies[e].y + enemies[e].size) >= canvas.height) || ((enemies[e].y - enemies[e].size) <= 0))
+		if(((bodies[e].y + bodies[e].size) >= canvas.height) || ((bodies[e].y - bodies[e].size) <= 0))
 		{
 
-			enemies[e].yv = enemies[e].yv * -1;
+			bodies[e].yv = bodies[e].yv * -1;
 
 			//trigger particle effect
-			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,particleSize,maxNumParticles,startX,startY,particleLifespan,spawnRate,type,width)
-			particleEngine.spark(255,0,0,enemies[e].x,enemies[e].y)
+			//colorRed,colorGreen,colorBlue,duration, framesPerSecond,bodiesize,maxNumbodies,startX,startY,particleLifespan,spawnRate,type,width)
+			particleEngine.spark(bodies[e].colour.red,bodies[e].colour.green,bodies[e].colour.blue,bodies[e].x,bodies[e].y)
 		}
 	}
 
@@ -842,6 +835,68 @@ var colourObj = function()
 	}
 
 };
+
+function setSpeed(val)
+{
+	for(obj in bodies)
+	{
+		bodies[obj].speed = Number(val);
+	}
+
+	document.getElementById("speedLabel").innerHTML = val;
+	document.getElementById("speed").value = val;
+}
+
+function setFriction(val)
+{
+	for(obj in bodies)
+	{
+		bodies[obj].friction = Number(val);
+	}
+
+	document.getElementById("frictionLabel").innerHTML = val;
+	document.getElementById("friction").value = val;
+}
+
+function setTrail(val)
+{
+	for(obj in bodies)
+	{
+		bodies[obj].trailLength = Number(val);
+	}
+
+	document.getElementById("trailLabel").innerHTML = val;
+	document.getElementById("trail").value = val;
+}
+
+function drawBackground()
+{
+    (function() {
+
+        // resize the canvas to fill browser window dynamically
+        window.addEventListener('resize', resizeCanvas, false);
+        
+        function resizeCanvas() {
+
+                
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+                
+                
+                
+                /**
+                 * Your drawings need to be inside this function otherwise they will be reset when 
+                 * you resize the browser window and the canvas goes will be cleared.
+                 */
+                drawStuff(); 
+        }
+        resizeCanvas();
+        
+        function drawStuff() {
+                // do your drawing stuff here
+        }
+    })();
+}
 
 
 
