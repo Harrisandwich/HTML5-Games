@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+  <script src="../Utilities/jquery-1.12.2.min.js"></script>
+	<script src="../Utilities/ParticleEffectComponant.js"></script>
+  <script src="../Utilities/GUIComponent.js"></script>
+   <link rel="stylesheet" type="text/css" href="index.css">
+  </head>
+  <body>
+    <div id="menu-bar" style="position:absolute;width:200px; height: 100%; color: rgba(200,200,200,1);">
+      <div id="arrow" onclick="closeMenu()">
+          <h3 id="arrowText" style="height: 100%; width: 100%; font-family: 'Segoe UI', 'Ariel'; text-align:left; margin-top: -5px; top: -80px;">
+            Options
+          </h3>
+        </div>
+
+      <div id="menuItems" class="styled-select" style="margin-left: 10px; margin-top: 10px;">
+        <div id="swarmItems">
+          Speed:<div id="speedLabel" style="display:inline;"></div><br/>
+          <input type="range" id="speed" value=0.1 min=0 max=1 step=0.05 oninput="setSpeed(value)"/><br/><br/>
+          Friction:<div id="frictionLabel" style="display:inline;"></div><br/>
+          <input type="range" id="friction" name="friction" value="0.01" min="0" max="0.5" step="0.01" oninput="setFriction(value)"/><br/><br/>
+          Trail Length:<div id="trailLabel" style="display:inline;"></div><br/>
+          <input type="range" id="trail" name="trail" value=200 min=10 max=500 oninput="setTrail(value)"/><br/><br/>
+          Number Of Particles:<div id="amountLabel" style="display:inline;"></div><br/>
+          <input type="range" id="numberOf" name="numberOf" value=10 min=1 max=50 oninput="setNumberOfBodies(value)"/><br/><br/>
+          <input type="button" value="Reset Particles" onclick="resetBodies()"/><br/><br/><br/>
+          <input type="checkbox" id="collisionCheckbox" onchange="toggleCollision(checked)"/>Boundry Collision<br/>
+          <input type="checkbox" id="followMouse" onchange="toggleFollowMouse(checked)"/>Follow Mouse
+        </div>
+        <div id="cultureItems">
+          <select onchange="setColour(value)" id="colourSelect">
+            <option value="blue">Blue</option>
+            <option value="red">Red</option>
+            <option value="green">Green</option>
+          </select>
+          <select onchange="changeScreen(value)" id="screenSelect" value="1">
+            <option value="square">Square</option>
+            <option value="full">Full Screen</option>
+          </select>
+           <select onchange="changeType(value)" id="modeSelect">
+            <option value="normal">Normal</option>
+            <option value="domination">Domination</option>
+          </select>
+          <input type="button" value="Pause" id="pauseButton"/>
+          <input type="button" value="Clear" id="clearButton" onclick="clearNodes()"/>
+          <input type="checkbox" name="showIds" value="show" onchange="toggleIds(checked)"/>Show IDs
+          <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div>
+        </div>
+        <br/><br/><br/>
+          <h4>Current Sim:</h4><br/>
+          <select id="simChoose" onchange="changeSim(value)">
+            <option value="swarm">Swarm</option>
+            <option value="culture">CultureShock</option>
+            <option value="swarm">Particle Sandbox</option>
+          </select>
+      </div>
+    </div>
+  
+    <canvas id="myCanvas" style="
+    display: block;
+    background-color: black">
+   
+    </canvas>
+    <script src="index.js"></script>
+    <script id="runningScript" src="swarm/nbody.js"/></script>
+    <script id="runningScript" src="culture/CultureShock.js" /></script>
+
+
+
+  </body>
+</html>   

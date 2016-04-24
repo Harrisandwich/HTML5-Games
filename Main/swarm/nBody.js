@@ -1,5 +1,4 @@
-var canvas = document.getElementById('myCanvas');
-var canvasContext = canvas.getContext('2d');
+
 
 var speedTimer;
 var sizeTimer;
@@ -43,7 +42,7 @@ function nbodySetup()
 				keyupListener(event);
 		},false);
 
-	resetGame();
+	resetSwarmGame();
 
 }
 
@@ -521,15 +520,15 @@ var level = function()
 //---------------------------------levels-------------------------------------------------//
 
 
-function resetGame()
+function resetSwarmGame()
 {
 	characters = new Array();
 	bodies = new Array();
 	items = new Array();
 	obsticles = new Array();
 	particleEngine = new particleEffectComponant();
-	closeMenu();
-	drawBackground();
+
+	drawBackgroundSwarm();
 	setSpeed(0.1);
 	setFriction(0.01);
 	setTrail(200);
@@ -553,7 +552,7 @@ function resetGame()
 
 	
 	
-	simTimer = setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+	simTimer = setInterval(mainSwarmLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
 	//setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
 	//setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
 	
@@ -624,12 +623,12 @@ function toggleFollowMouse(value)
 		followMouse = false;
 	}
 }
-function mainLoop()
+function mainSwarmLoop()
 {
 	//debugObj.trace("main loop running");
 
-	drawEverything();
-	updateEverything();
+	drawEverythingSwarm();
+	updateEverythingSwarm();
 }
 function gameTimerFunction()
 {
@@ -653,9 +652,9 @@ function spawnBody()
 	bodies.push(newBody);
 }
 
-function drawEverything()
+function drawEverythingSwarm()
 {
-	drawBackground();
+	drawBackgroundSwarm();
 	for(ob in obsticles)
 	{
 		obsticles[ob].draw();
@@ -678,7 +677,7 @@ function drawEverything()
 }
 
 
-function updateEverything()
+function updateEverythingSwarm()
 {
 
 	playerCharacter.update();
@@ -904,7 +903,7 @@ function setTrail(val)
 	document.getElementById("trail").value = val;
 }
 
-function drawBackground()
+function drawBackgroundSwarm()
 {
     (function() {
 
@@ -965,24 +964,8 @@ function clearSwarm()
     particleEngine = null;
 
     clearInterval(simTimer);
-    drawBackground();
+    drawBackgroundSwarm();
 	
 }
 
 
-function closeMenu()
-{
-
-	$("#menuItems").hide();
-	$("#menu-bar").css("background-color", "rgba(0,0,0,0)");
-	$("#arrow").attr("onclick", "openMenu()");
-	$("#arrowText").html("Options");
-}
-
-function openMenu()
-{
-	$("#menuItems").show();
-	$("#menu-bar").css("background-color", "rgba(30,30,30,1)");
-	$("#arrow").attr("onclick", "closeMenu()");
-	$("#arrowText").html("Close");
-}
