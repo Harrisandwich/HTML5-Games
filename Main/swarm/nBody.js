@@ -23,28 +23,9 @@ var amount;
 
 var particleEngine;
 var simTimer;
-function nbodySetup()
-{
-	FRAMES_PER_SECOND = 30;
-	SECOND_IN_MILISECONDS = 1000;
-	Y_THRESHOLD = canvas.height;
-	X_THRESHOLD = canvas.width;
-	debugObj = new debug();
 
-	canvas.addEventListener('mousemove',function(event){
-				mouseX = event.clientX;
-				mouseY = event.clientY;
-		});
-	window.addEventListener('keydown',function(event){
-				checkKey(event);
-		},false);
-	window.addEventListener('keyup',function(event){
-				keyupListener(event);
-		},false);
 
-	resetSwarmGame();
 
-}
 
 
 
@@ -518,17 +499,17 @@ var level = function()
 }
 
 //---------------------------------levels-------------------------------------------------//
+nbodySetup();
 
-
-function resetSwarmGame()
+function resetGame()
 {
 	characters = new Array();
 	bodies = new Array();
 	items = new Array();
 	obsticles = new Array();
 	particleEngine = new particleEffectComponant();
-
-	drawBackgroundSwarm();
+	closeMenu();
+	drawBackground();
 	setSpeed(0.1);
 	setFriction(0.01);
 	setTrail(200);
@@ -552,7 +533,7 @@ function resetSwarmGame()
 
 	
 	
-	simTimer = setInterval(mainSwarmLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+	simTimer = setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
 	//setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
 	//setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
 	
@@ -623,12 +604,12 @@ function toggleFollowMouse(value)
 		followMouse = false;
 	}
 }
-function mainSwarmLoop()
+function mainLoop()
 {
 	//debugObj.trace("main loop running");
 
-	drawEverythingSwarm();
-	updateEverythingSwarm();
+	drawEverything();
+	updateEverything();
 }
 function gameTimerFunction()
 {
@@ -652,9 +633,9 @@ function spawnBody()
 	bodies.push(newBody);
 }
 
-function drawEverythingSwarm()
+function drawEverything()
 {
-	drawBackgroundSwarm();
+	drawBackground();
 	for(ob in obsticles)
 	{
 		obsticles[ob].draw();
@@ -677,7 +658,7 @@ function drawEverythingSwarm()
 }
 
 
-function updateEverythingSwarm()
+function updateEverything()
 {
 
 	playerCharacter.update();
@@ -903,7 +884,7 @@ function setTrail(val)
 	document.getElementById("trail").value = val;
 }
 
-function drawBackgroundSwarm()
+function drawBackground()
 {
     (function() {
 
@@ -935,7 +916,11 @@ function drawBackgroundSwarm()
 
 function clearSwarm()
 {
-	
+	clearInterval(simTimer);
+
+	setTimout(function(){
+
+
 	characters = null;
 	bodies = null;
 	items = null;
@@ -963,9 +948,59 @@ function clearSwarm()
 
     particleEngine = null;
 
-    clearInterval(simTimer);
-    drawBackgroundSwarm();
+    
+    drawBackground();
+	}, 1000);
 	
 }
 
 
+
+function nbodySetup()
+{
+	FRAMES_PER_SECOND = 30;
+	SECOND_IN_MILISECONDS = 1000;
+	Y_THRESHOLD = canvas.height;
+	X_THRESHOLD = canvas.width;
+	debugObj = new debug();
+
+	canvas.addEventListener('mousemove',function(event){
+				mouseX = event.clientX;
+				mouseY = event.clientY;
+		});
+	window.addEventListener('keydown',function(event){
+				checkKey(event);
+		},false);
+	window.addEventListener('keyup',function(event){
+				keyupListener(event);
+		},false);
+
+	resetGame();
+
+}
+
+
+function clearSim()
+{
+	clearInterval(simTimer);
+
+    speedTimer = null;
+    sizeTimer = null;
+    doublePointsTimer = null;
+    gameTimer = null;
+    spawnRate = null;
+    playerCharacter = null;
+    characters = null;
+    items = null;
+    bodies = null;
+    obsticles = null;
+    debugObj = null;
+    followMouse = null;
+    mouseX = null;
+    mouseY = null;
+    isCollisionOn = null;
+    amount = null;
+    particleEngine = null;
+    simTimer = null;
+
+}

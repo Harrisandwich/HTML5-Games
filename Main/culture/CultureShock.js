@@ -1,29 +1,13 @@
-function cultureSetup()
-{ 
-    FRAMES_PER_SECOND = 30;
-    SECOND_IN_MILISECONDS = 1000;
-    Y_THRESHOLD = canvas.height;
-    X_THRESHOLD = canvas.width;
-    resetCultureGame();
-}
 
-
-
+FRAMES_PER_SECOND = 30;
+SECOND_IN_MILISECONDS = 1000;
+Y_THRESHOLD = canvas.height;
+X_THRESHOLD = canvas.width;
 
 
 var RATE_MOD = 1;
 var TICK_RATE = 1;
 var NODE_GROWTH_RATE = 0.5 * RATE_MOD;
-var mainCultureLoopID;
-var gameTimerID;
-var screenType;
-var mainCultureLoopID;
-var gameTimerID;
-var showIds;
-var tickSpeed;
-var screenType;
-var mode;
-var paused;
 
 
 
@@ -611,29 +595,29 @@ var node = function(){
 
 
 
+var nodes = new Array();
+var selectedColour = new colourObj();
+var scale = 0;
+var sizeScale = 1;
+var modifier = 1;
+var reductionModifier = 0.5;
+//listen for a mouse click
+        
+canvas.addEventListener('mousedown', placeNode);
+window.addEventListener('keydown', zoom);
 
+var mainLoopID;
+var gameTimerID;
+var showIds = false;
+var tickSpeed = 1000;
+var screenType = document.getElementById("screenSelect").value;
+var mode = document.getElementById("modeSelect").value;
+var paused = false;
 
+resetGame();
 
-
-function resetCultureGame()
+function resetGame()
 {
-    nodes = new Array();
-    selectedColour = new colourObj();
-    scale = 0;
-    sizeScale = 1;
-    modifier = 1;
-    reductionModifier = 0.5;
-    //listen for a mouse click
-            
-    canvas.addEventListener('mousedown', placeNode);
-    window.addEventListener('keydown', zoom);
-
-    mainCultureLoopID;
-    gameTimerID;
-    showIds = false;
-    tickSpeed = 1000;
-    screenType = document.getElementById("screenSelect").value;
-    mode = document.getElementById("modeSelect").value;
     paused = false;
     document.getElementById("speedLabel").innerHTML = tickSpeed;
     /*document.getElementById("outputLabel").innerHTML = modifier*100;
@@ -643,16 +627,16 @@ function resetCultureGame()
     document.getElementById("pauseButton").setAttribute("onclick", "pause()");
     document.getElementById("pauseButton").setAttribute("value", "Pause");
     setColour(document.getElementById("colourSelect").value);
-    mainCultureLoopID = setInterval(mainCultureLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
+    mainLoopID = setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
     gameTimerID = setInterval(gameTimerFunction,tickSpeed);
 }
 
-function mainCultureLoop()
+function mainLoop()
 {
     //debugObj.trace("main loop running");
 
-    drawEverythingCulture();
-    updateEverythingCulture();
+    drawEverything();
+    updateEverything();
     
 }
 
@@ -661,15 +645,15 @@ function gameTimerFunction()
     tick();
 }
 
-function drawEverythingCulture()
+function drawEverything()
 {
-    drawBackgroundCulture();
+    drawBackground();
     drawLines();
     drawNodes();
     
 }
 
-function updateEverythingCulture()
+function updateEverything()
 {
     
 }
@@ -682,7 +666,7 @@ function tick()
     }
 }
 
-function drawBackgroundCulture()
+function drawBackground()
 {
     (function() {
 
@@ -828,7 +812,7 @@ function setSpeed(value)
     tickSpeed = 1000/value;
     document.getElementById("speedLabel").innerHTML = value;
     pause();
-    resetCultureGame();
+    resetGame();
 }
 
 function toggleIds(isChecked)
@@ -841,7 +825,7 @@ function pause()
     paused = true;
     clearInterval(gameTimerID);
 
-    document.getElementById("pauseButton").setAttribute("onclick", "resetCultureGame()");
+    document.getElementById("pauseButton").setAttribute("onclick", "resetGame()");
     document.getElementById("pauseButton").setAttribute("value", "Start");
 }
 
@@ -997,7 +981,7 @@ function zoom(event)
         //pause
         if(paused)
         {
-            resetCultureGame();
+            resetGame();
         }
         else
         {
@@ -1092,10 +1076,5 @@ function drawCircle(leftX, topY, diameter,fillColor)
     //draw arc
     canvasContext.arc(leftX,topY,diameter,0,Math.PI*2,true)
     canvasContext.fill();
-
-}
-
-function clearCulture()
-{
 
 }
