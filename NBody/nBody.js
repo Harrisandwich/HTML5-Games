@@ -21,6 +21,12 @@ var items;
 var bodies;
 var obsticles;
 var debugObj;
+var followMouse;
+var mouseX;
+var mouseY; 
+
+var isCollisionOn;
+var amount;
 
 var particleEngine;
 
@@ -73,59 +79,68 @@ var character = function ()
 	};
 	this.update = function()
 	{
-		if(this.xv < this.mXV && this.moveFlags.right)
+		if(!followMouse)
 		{
-			this.xv += this.speed;
-		}
-		if(this.xv > -this.mXV && this.moveFlags.left)
-		{
-			this.xv += this.speed * -1;
-		}
-		if (this.xv > this.mXV)
-		{
-			this.xv = this.mXV;
-		}
-
-		if(this.yv < this.mYV && this.moveFlags.down)
-		{
-			this.yv += this.speed;
-		}
-
-		else if(this.yv > -this.mYV && this.moveFlags.up)
-		{
-			this.yv += this.speed * -1;
-		}
-		else if (this.yv > this.myV)
-		{
-			this.yv = this.myV;
-		}
-
-
-
-		this.x += this.xv;
-		this.y += this.yv;
-
-		
-
-			if(this.xv > 0)
+			if(this.xv < this.mXV && this.moveFlags.right)
 			{
-				this.xv -= this.friction;
+				this.xv += this.speed;
 			}
-			else if (this.xv < 0)
+			if(this.xv > -this.mXV && this.moveFlags.left)
 			{
-				this.xv += this.friction;
+				this.xv += this.speed * -1;
 			}
+			if (this.xv > this.mXV)
+			{
+				this.xv = this.mXV;
+			}
+
+			if(this.yv < this.mYV && this.moveFlags.down)
+			{
+				this.yv += this.speed;
+			}
+
+			else if(this.yv > -this.mYV && this.moveFlags.up)
+			{
+				this.yv += this.speed * -1;
+			}
+			else if (this.yv > this.myV)
+			{
+				this.yv = this.myV;
+			}
+
+
+
+			this.x += this.xv;
+			this.y += this.yv;
+
 			
+
+				if(this.xv > 0)
+				{
+					this.xv -= this.friction;
+				}
+				else if (this.xv < 0)
+				{
+					this.xv += this.friction;
+				}
+				
+				
 			
-		
-			if(this.yv > 0)
-			{
-				this.yv -= this.friction;
-			}
-			else if (this.yv < 0) 
-			{
-				this.yv += this.friction;
-			}
+				if(this.yv > 0)
+				{
+					this.yv -= this.friction;
+				}
+				else if (this.yv < 0) 
+				{
+					this.yv += this.friction;
+				}
+
+		}
+		else
+		{
+			this.x = mouseX;
+			this.y = mouseY;
+		}
 			
 
 
@@ -424,18 +439,10 @@ var obsticle = function()
 
 }
 
-/*
-
-	The character rushes to grab money bags. 
-	Each bag adds to the timer as well as the users points.
-
-	Power ups:
-		- speed
-		- double points
-		- size?
-
-*/
-
+canvas.addEventListener('mousemove',function(event){
+			mouseX = event.clientX -5;
+			mouseY = event.clientY - 50;
+	});
 window.addEventListener('keydown',function(event){
 			checkKey(event);
 	},false);
@@ -511,10 +518,18 @@ resetGame();
 
 function resetGame()
 {
+	characters = new Array();
+	bodies = new Array();
+	items = new Array();
+	obsticles = new Array();
+
+	particleEngine = new particleEffectComponant();
+
 	drawBackground();
 	setSpeed(0.1);
 	setFriction(0.01);
 	setTrail(200);
+	setNumberOfBodies(10);
 	debugObj.trace("Game reset start");
 	debugObj.debugFlag = false;
 	playerCharacter = new character();
@@ -525,54 +540,12 @@ function resetGame()
 	doublePointsTimer = 0;
 	spawnRate = 3;
 	gameTimer = SECOND_IN_MILISECONDS * 10;
-
-	particleEngine = new particleEffectComponant();
+	amount = 10;
+	isCollisionOn = false;
+	followMouse = false;
 	particleEngine.construct(canvas,canvasContext,FRAMES_PER_SECOND);
 	
-	characters = new Array();
-	bodies = new Array();
-	items = new Array();
-	obsticles = new Array();
-
-
-
-	/*var ob1 = new obsticle();
-	ob1.type = "speed";
-	ob1.x = 0;
-	ob1.y = 0;
-	ob1.width = 50;
-	ob1.height = 100;
-
-	obsticles.push(ob1);
-
-	var ob2 = new obsticle();
-	ob2.type = "sticky";
-	ob2.x = 100;
-	ob2.y = 0;
-	ob2.width = 50;
-	ob2.height = 100;
-
-	obsticles.push(ob2);
-
-	var ob3 = new obsticle();
-	ob3.type = "lava";
-	ob3.x = 200;
-	ob3.y = 0;
-	ob3.width = 50;
-	ob3.height = 100;
-
-	obsticles.push(ob3);
-
-	var ob4 = new obsticle();
-	ob4.type = "wall";
-	ob4.x = 300;
-	ob4.y = 0;
-	ob4.width = 50;
-	ob4.height = 100;
-
-	obsticles.push(ob4);*/
-
-	resetBodies(30);
+	resetBodies();
 
 	
 	
@@ -582,16 +555,71 @@ function resetGame()
 	
 
 }
-function resetBodies(amount)
+function resetBodies()
 {
 	bodies = new Array();
-
+	
 	for(var i = 0; i < amount; i++)
 	{
 		spawnBody();
 	}
+	setSpeed(document.getElementById("speed").value);
+	setFriction(document.getElementById("friction").value);
+	setTrail(document.getElementById("trail").value);
 }
 
+function setNumberOfBodies(value)
+{
+	var amountOf = Number(value);
+	amount = amountOf;
+	if(amountOf > bodies.length)
+	{
+		var difference = amountOf - bodies.length;
+		for(var i = 0; i < difference; i++)
+		{
+			spawnBody();
+		}
+	}
+	else if(amountOf < bodies.length)
+	{
+		var difference = bodies.length - amountOf;
+		for(var i = 0; i < difference; i++)
+		{
+			bodies.splice(0,1);
+		}
+	}
+
+	setSpeed(document.getElementById("speed").value);
+	setFriction(document.getElementById("friction").value);
+	setTrail(document.getElementById("trail").value);
+
+
+	document.getElementById("amountLabel").innerHTML = value;
+	document.getElementById("numberOf").value = Number(value);
+}
+function toggleCollision(value)
+{
+	if(value)
+	{
+		isCollisionOn = true;
+	}
+	else
+	{
+		isCollisionOn = false;
+	}
+}
+
+function toggleFollowMouse(value)
+{
+	if(value)
+	{
+		followMouse = true;
+	}
+	else
+	{
+		followMouse = false;
+	}
+}
 function mainLoop()
 {
 	//debugObj.trace("main loop running");
@@ -655,8 +683,11 @@ function updateEverything()
 		bodies[e].getPlayer(playerCharacter.x,playerCharacter.y);
 		bodies[e].update();
 	}
-	checkCollisions();
 
+	if(isCollisionOn)
+	{
+		checkCollisions();
+	}
 	particleEngine.updateEverything();
 
 
