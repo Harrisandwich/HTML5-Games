@@ -610,7 +610,7 @@ var mainLoopID;
 var gameTimerID;
 var showIds = false;
 var tickSpeed = 1000;
-var screenType = document.getElementById("screenSelect").value;
+var screenType = "full";
 var mode = document.getElementById("modeSelect").value;
 var paused = false;
 
@@ -1078,3 +1078,29 @@ function drawCircle(leftX, topY, diameter,fillColor)
     canvasContext.fill();
 
 }
+
+function clearSim()
+{
+    resetGame();
+    clearInterval(mainLoopID);
+    clearInterval(gameTimerID);
+    nodes  = null;
+    selectedColour  = null;
+    scale = null;
+    sizeScale = null;
+    modifier = null;
+    reductionModifier = null;
+    //listen for a mouse click
+            
+    canvas.removeEventListener('mousedown', placeNode);
+    window.removeEventListener('keydown', zoom);
+
+    mainLoopID = null;
+    gameTimerID = null;
+    showIds  = null;
+    tickSpeed  = null;
+    screenType = null;
+    mode  = null;
+    paused  = null;
+}
+
