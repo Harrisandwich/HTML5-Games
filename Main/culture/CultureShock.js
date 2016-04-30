@@ -675,17 +675,11 @@ function drawBackground()
         
         function resizeCanvas() {
 
-                if(screenType == "square")
-                {
-                     canvas.width = window.innerWidth/2;
-                    canvas.height = canvas.width;
+               
                 
-                }
-                else if (screenType == "full")
-                {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                }
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight - (window.innerHeight * 0.05);
+                
                 
                 
                 /**
@@ -1081,7 +1075,7 @@ function drawCircle(leftX, topY, diameter,fillColor)
 
 function clearSim()
 {
-    resetGame();
+    pause();
     clearInterval(mainLoopID);
     clearInterval(gameTimerID);
     nodes  = null;

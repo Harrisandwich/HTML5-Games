@@ -894,8 +894,8 @@ function drawBackground()
         function resizeCanvas() {
 
                 
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth
+            canvas.height = window.innerHeight - (window.innerHeight * 0.05);
                 
                 
                 
@@ -913,46 +913,6 @@ function drawBackground()
     })();
 }
 
-
-function clearSwarm()
-{
-	clearInterval(simTimer);
-
-	setTimout(function(){
-
-
-	characters = null;
-	bodies = null;
-	items = null;
-	obsticles = null;
-	speedTimer = null;
-    sizeTimer = null;
-    doublePointsTimer = null;
-    gameTimer = null; 
-
-    spawnRate = null;
-
-    playerCharacter = null;
-
-    characters = null;
-    items = null;
-    bodies = null;
-    obsticles = null;
-    debugObj = null;
-    followMouse = null;
-    mouseX = null;
-    mouseY = null; 
-
-    isCollisionOn = null;
-    amount = null;
-
-    particleEngine = null;
-
-    
-    drawBackground();
-	}, 1000);
-	
-}
 
 
 
@@ -974,9 +934,7 @@ function nbodySetup()
 	window.addEventListener('keyup',function(event){
 				keyupListener(event);
 		},false);
-
 	resetGame();
-
 }
 
 

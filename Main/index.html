@@ -6,10 +6,23 @@
   <script src="../Utilities/GUIComponent.js"></script>
    <link rel="stylesheet" type="text/css" href="index.css">
   </head>
-  <body>
-    <div id="menu-bar" style="position:absolute;width:200px; height: 100%; color: rgba(200,200,200,1);">
-     
-
+  <body style="background-color: black;">
+    <div id="nav" style="width:100%; height:5vh; background-color: rgba(30,30,30,1);  position: relative;font-family: 'Segoe UI', 'Ariel'; color: rgba(255,255,255,1);">
+      
+      <div id="title" style="font-size: 20px; display:inline;">
+        Gold Team Games <div style="font-size: 14px; display: inline">- A Toybox by Harrison Hutcheon</div>
+      </div>
+      <div id="simOption" style="float:right;display:inline; text-align: right;">
+            <h4 style=" font-size: 14px;  display:inline;">Current Sim:</h4>
+            <select id="simChoose" onchange="changeSim(value)" style="display: inline;">
+              <option value="swarm">Swarm</option>
+              <option value="culture">CultureShock</option>
+              <option value="particle">Particle Sandbox</option>
+            </select>
+      </div>
+      
+    </div>
+    <div id="menu-bar" style="position:absolute;width:200px; height: auto; color: rgba(200,200,200,1); font-family: 'Segoe UI', 'Ariel';">
       <div id="menu" class="styled-select" style="margin-left: 10px; margin-top: 20%">
         <div id="menuItems">
           Speed:<div id="speedLabel" style="display:inline;"></div><br/>
@@ -24,16 +37,6 @@
           <input type="checkbox" id="collisionCheckbox" onchange="toggleCollision(checked)"/>Boundry Collision<br/>
           <input type="checkbox" id="followMouse" onchange="toggleFollowMouse(checked)"/>Follow Mouse
         </div>
-
-        <div id="simOption">
-          <br/><br/><br/>
-            <h4>Current Sim:</h4><br/>
-            <select id="simChoose" onchange="changeSim(value)">
-              <option value="swarm">Swarm</option>
-              <option value="culture">CultureShock</option>
-              <option value="swarm">Particle Sandbox</option>
-            </select>
-        </div>
       </div>
     </div>
     <div id="arrow" onclick="closeMenu()" style="position: absolute; display: block;color: rgba(200,200,200,1);">
@@ -43,6 +46,7 @@
     </div>
   
     <canvas id="myCanvas" style="
+    top: 5vh;
     display: block;
     background-color: black">
    
