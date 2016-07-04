@@ -5,9 +5,9 @@
   <script src="../Utilities/jquery-1.12.2.min.js"></script>
   <script src="../Utilities/ParticleEffectComponant.js"></script>
   <script src="../Utilities/GUIComponent.js"></script>
-   <link rel="stylesheet" type="text/css" href="nBody.css">
+   <link rel="stylesheet" type="text/css" href="tree.css">
   </head>
-  <body onload="nbodySetup()">
+  <body>
     <div id="menu-bar" style="position:absolute;width:200px; height: 100%; color: rgba(200,200,200,1);">
       <div id="arrow" onclick="closeMenu()">
           <h3 id="arrowText" style="height: 100%; width: 100%; font-family: 'Segoe UI', 'Ariel'; text-align:left; margin-top: -5px; top: -80px;">
@@ -15,17 +15,7 @@
           </h3>
         </div>
       <div id="menuItems" class="styled-select" style="margin-left: 10px; margin-top: 10px;">
-        Speed:<div id="speedLabel" style="display:inline;"></div><br/>
-        <input type="range" id="speed" value=0.1 min=0 max=1 step=0.05 oninput="setSpeed(value)"/><br/><br/>
-        Friction:<div id="frictionLabel" style="display:inline;"></div><br/>
-        <input type="range" id="friction" name="friction" value="0.01" min="0" max="0.5" step="0.01" oninput="setFriction(value)"/><br/><br/>
-        Trail Length:<div id="trailLabel" style="display:inline;"></div><br/>
-        <input type="range" id="trail" name="trail" value=200 min=10 max=500 oninput="setTrail(value)"/><br/><br/>
-        Number Of Particles:<div id="amountLabel" style="display:inline;"></div><br/>
-        <input type="range" id="numberOf" name="numberOf" value=10 min=1 max=50 oninput="setNumberOfBodies(value)"/><br/><br/>
-        <input type="button" value="Reset Particles" onclick="resetBodies()"/><br/><br/><br/>
-        <input type="checkbox" id="collisionCheckbox" onchange="toggleCollision(checked)"/>Boundry Collision<br/>
-        <input type="checkbox" id="followMouse" onchange="toggleFollowMouse(checked)"/>Follow Mouse
+       
       </div>
     </div>
   
@@ -34,11 +24,9 @@
     background-color: black">
    
     </canvas>
-    <script src="nBody.js"/></script>
+    <script src="tree.js"/></script>
 
 
 
   </body>
 </html>   
-Status API Training Shop Blog About
-© 2016 GitHub, Inc. Terms Privacy Security Contact Help
