@@ -36,7 +36,7 @@ class Tree
         this.spawnTimer = 0.0;
         //array of nodes
         this.nodes = [];
-        this.root = new Node("Root",canvas.width/2,canvas.height,50,null, 0,0,{ x: 0, y: 0});
+        this.root = new Node("Root",canvas.width/2,canvas.height,1,null, 0,0,{ x: 0, y: 0});
         this.apicalMeristem = new Node("ApicalMeristem",canvas.width/2,canvas.height - 1,1,this.root,STARTING_GROWTH_RATE, { x: 0, y: -1});
         //spawn the first true node
         var children = this.apicalMeristem.spawnChildren();
@@ -108,8 +108,9 @@ class Tree
         drawTrunk(this.nodes[0],this.apicalMeristem);
         for(var n in this.nodes)
         {
-            drawCircle(this.nodes[n]);
+            
             drawLine(this.nodes[n],this.nodes[n].parent);
+            drawCircle(this.nodes[n]);
         }
 
     }
@@ -185,7 +186,8 @@ class Node
         dy = this.y  - this.parent.y;
         
         var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-
+        dis -= this.size;
+        dis -= this.parent.size;
         return dis
     }
 
@@ -302,8 +304,17 @@ class Node
             */
             
 
-            var distanceThreshold = 4;
-            var distance = this.getDistanceFromMeristem().distance/distanceThreshold;
+            //var distanceThreshold = 4;
+            //var distance = this.getDistanceFromMeristem().distance/distanceThreshold;
+            var distance = 0;
+            if(this.getDistanceFromMeristem().distance > 1)
+            {
+                distance = 1;
+            }
+            else
+            {
+                distance = 0;
+            }
 
             potential =  resourceAvailabilityWeighting * distance;
         }
@@ -313,18 +324,27 @@ class Node
                 - distance from parent
                 - size vs parent size
             */
-            var distanceThreshold;
+            /*var distanceThreshold;
             if(this.parent.id == "ApicalMeristem")
             {
                 distanceThreshold = (canvas.height/3);
             }
             else
             {
-                distanceThreshold = this.parent.getDistanceFromParent() * 0.8;
+                distanceThreshold = this.parent.getDistanceFromParent() * 0.99;
             }
             
 
-            var distance = this.getDistanceFromParent()/distanceThreshold;
+            var distance = this.getDistanceFromParent()/distanceThreshold;*/
+            var distance = 0;
+            if(this.getDistanceFromParent() > 25)
+            {
+                distance = 1;
+            }
+            else
+            {
+                distance = 0;
+            }
            
             potential = distance * resourceAvailabilityWeighting;
 
@@ -341,7 +361,7 @@ class Node
 
         if(this.slope.x != 0)
         {
-            this.growthX = (this.growthRate * this.slope.x) * this.direction;
+            this.growthX = this.parent.growthX + (this.growthRate * this.slope.x) * this.direction;
         }
 
         this.growthY = this.parent.growthY + (this.slope.y * this.growthRate);
@@ -402,19 +422,22 @@ class Node
             };
 
             //This doesnt work
+            
             if(i == 0)
             {
-                //slope = this.getCurrentSlope(vects[0].x,vects[0].y,vects[2].x,vects[2].y);
+                
                 x = vects[0].x;
                 y = vects[0].y;
+                
             }
             else
             {
-                //slope = this.getCurrentSlope(vects[1].x,vects[1].y,vects[3].x,vects[3].y);
                 x = vects[2].x;
                 y = vects[2].y;
+               
             }
 
+            slope = this.getCurrentSlope(x,y,this.x,this.y);
             //set x and y to slop + growth rate
             //get x relative to this.x. Set direction
             //set size to the same is the current size (maybe a touch smaller?)
@@ -422,10 +445,12 @@ class Node
             if(x > this.x)
             {
                 direction = 1;
+                
             }
             else
             {
                 direction = -1;
+               
             }
 
             
@@ -471,21 +496,24 @@ class Node
         slope = this.getCurrentSlope(this.x,this.y,this.parent.x,this.parent.y);
 
         //place the node on this node at the same slope
-        x = this.x + slope.x;
-        y = this.y + slope.y;
+        if(this.x > this.parent.x)
+        {
+            direction = 1;
+            x = this.x + slope.x;
+        }
+        else
+        {
+            direction = -1;
+            x = this.x - slope.x;
+        }
+       
+        y = this.y - slope.y;
 
         //make it 80% of the size
         size = this.size * 0.8;
 
         //get the direction on the x axis
-        if(x > this.x)
-        {
-            direction = 1;
-        }
-        else
-        {
-            direction = -1;
-        }
+        
 
         var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope);
         children.push(newNode);
@@ -575,7 +603,7 @@ function drawTrunk(node1,node2){
     context.beginPath();
     context.moveTo(node1.x,node1.y);
     context.lineTo(node2.x,node2.y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "white";
     context.stroke();
 
@@ -583,28 +611,28 @@ function drawTrunk(node1,node2){
     context.beginPath();
     context.moveTo(vectors[0].x,vectors[0].y);
     context.lineTo(vectors[1].x,vectors[1].y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 
     context.beginPath();
     context.moveTo(vectors[2].x,vectors[2].y);
     context.lineTo(vectors[3].x,vectors[3].y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 
     context.beginPath();
     context.moveTo(node1.x - node1.size, node1.y - node1.size/2);
     context.lineTo(node1.x - node1.size, node1.y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 
     context.beginPath();
     context.moveTo(node1.x + node1.size, node1.y - node1.size/2);
     context.lineTo(node1.x + node1.size, node1.y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 }
@@ -658,21 +686,21 @@ function drawLine(node1,node2)
     context.beginPath();
     context.moveTo(node1.x,node1.y);
     context.lineTo(node2.x,node2.y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "white";
     context.stroke();
 
     context.beginPath();
     context.moveTo(vectors[0].x,vectors[0].y);
     context.lineTo(vectors[1].x,vectors[1].y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 
     context.beginPath();
     context.moveTo(vectors[2].x,vectors[2].y);
     context.lineTo(vectors[3].x,vectors[3].y);
-    context.lineWidth = 5;
+    context.lineWidth = 3;
     context.strokeStyle = "blue";
     context.stroke();
 
@@ -683,11 +711,15 @@ function drawCircle(node1)
     var color = "";
     if(node1.id == "Bud")
     {
-        color = "blue";
+        color = "green";
+    }
+    else if (node1.id == "Meristem")
+    {
+        color = "red";
     }
     else
     {
-        color = "red";
+        color = "blue"
     }
     context.strokeStyle = color;
     context.fillStyle = "red";
