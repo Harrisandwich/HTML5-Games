@@ -594,7 +594,7 @@ function resetGame()
 	
 	setInterval(mainLoop, SECOND_IN_MILISECONDS/FRAMES_PER_SECOND);
 	setInterval(gameTimerFunction,SECOND_IN_MILISECONDS);
-	//setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
+	setInterval(spawnItems, SECOND_IN_MILISECONDS*spawnRate);
 	
 
 }

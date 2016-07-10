@@ -38,9 +38,9 @@ class Tree
         this.nodes = [];
         this.ghosts = [];
         //constructor       (id,    x,             y,            size,parent,growthRate,           direction,slope,tree)
-        this.root = new Node("Root",canvas.width/2,canvas.height,1,null, 0,0,{ x: 0, y: 0});
+        this.root = new Node("Root",canvas.width/2,canvas.height - 1,1,null, 0,0,{ x: 0, y: 0});
         //constructor                 (id,              x,             y,                size,parent,growthRate,           direction,slope,tree)
-        this.apicalMeristem = new Node("ApicalMeristem",canvas.width/2,canvas.height - 1,1,this.root,STARTING_GROWTH_RATE, 1,{ x: 0, y: -1},this,0);
+        this.apicalMeristem = new Node("ApicalMeristem",canvas.width/2,canvas.height - 2,1,this.root,STARTING_GROWTH_RATE, 1,{ x: 0, y: -1},this,0);
         //spawn the first true node
         var children = this.apicalMeristem.spawnChildren();
         this.nodes.push(children[0]);
@@ -320,7 +320,7 @@ class Node
         {
             var distance = 0;
             var distanceFromMeristem = this.getDistanceFromMeristem().distance;
-            if(distanceFromMeristem > 1)
+            if(distanceFromMeristem > 3)
             {
                 distance = 1;
             }
@@ -347,11 +347,11 @@ class Node
 
         }
 
-        if(this.gen > 8)
+        /*if(this.gen > 8 && this.id == "Meristem")
         {
 
-            potential = 0;
-        }
+            this.id = "Bud";
+        }*/
 
         return potential;
     }
@@ -369,16 +369,22 @@ class Node
         this.offset.x = (disX * sc) + this.tree.root.x; 
         this.offset.y = (disY * sc) + this.tree.root.y;
 
-        if((this.offset.x > canvas.width || this.offset.x < 0 || this.offset.y < 0) && (scale - 0.2) > 0)
+        if(this.offset.x > canvas.width || this.offset.x < 0 || this.offset.y < 0 )
         {
-
-            setScale(scale - 0.2);
+            if((scale - 0.2) > 0)
+            {
+                setScale(scale - 0.2);
+            }
+            
         }
+
+
     }
     grow()
     {
 
         //I should grow based on slope
+        
         
         if(this.slope.x != 0)
         {
@@ -396,6 +402,7 @@ class Node
         this.size += 0.2;
 
         this.scale(scale);
+    
 
        
         
@@ -408,7 +415,6 @@ class Node
         {
             var roll = Math.random();
             var potential = this.getGrowthPotential();
-            
             
             if(roll < potential)
             {
@@ -435,15 +441,12 @@ class Node
         */
 
         var numberOfChildren = (Math.random() * 2) + 1;
-
         //vectors 1 and 3
         var vects = getPolygonVerts(this,this.parent);
-
-
         var children = [];
-        this.id = "Branch";
-        
         var side;
+
+        this.id = "Branch";
 
         for(var i = 0; i < 2; i++)
         {
@@ -459,41 +462,44 @@ class Node
                 y: 0
             };
 
-            //This doesnt work
             
+            //add some kind of deviation
+
+            var deviation = {
+                x: 0,
+                y: 0
+            }
             if(i == 0)
             {
-                
                 x = vects.n1.v1.x;
                 y = vects.n1.v1.y;
-
-                
-                
             }
             else
             {
                 x = vects.n1.v2.x;
                 y = vects.n1.v2.y;
-                
-               
             }
             slope = this.getCurrentSlope(x,y,vects.n1.v4.x,vects.n1.v4.y);
-            
+            deviation.x = (Math.random()*(0.2 - 0.01) + 0.01);
+            deviation.y = (Math.random()*(0.6 - 0.1) + 0.1);
 
-
-            //set x and y to slop + growth rate
-            //get x relative to this.x. Set direction
-            //set size to the same is the current size (maybe a touch smaller?)
-
+            if(Math.round(Math.random()) == 1)
+            {
+                slope.x -= deviation.x;
+            }
+            else
+            {
+                slope.x += deviation.x;
+                
+            }
+            slope.y += deviation.y;
             if(x > this.x)
             {
                 direction = 1;
-                
             }
             else
             {
                 direction = -1;
-               
             }
 
             
@@ -537,7 +543,25 @@ class Node
             x: 0,
             y: 0
         };
+        var deviation = {
+                x: 0,
+                y: 0
+            }
+        deviation.x = (Math.random()*(0.2 - 0.01) + 0.01);
+        deviation.y = (Math.random()*(0.2 - 0.01) + 0.01);
 
+        if(Math.round(Math.random()) == 1)
+        {
+            slope.x -= deviation.x;
+        }
+        else
+        {
+            slope.x += deviation.x;
+            
+        }
+
+        slope.y += deviation.y;
+        
         // get the slop of the current branch
         slope = this.getCurrentSlope(this.x,this.y,this.parent.x,this.parent.y);
 
@@ -605,7 +629,6 @@ function start()
     }
     else
     {
-        animationTimer
         animationTimer = setInterval(mainLoop, SEC_IN_MILISECONDS/FPS);
     }
 
