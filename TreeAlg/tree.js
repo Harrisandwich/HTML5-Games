@@ -11,9 +11,9 @@
     //FUN NOTE: Maybe obsticales?!?
 var SEC_IN_MILISECONDS = 1000;
 var FPS =60;
-var STARTING_GROWTH_RATE = 1;
+var STARTING_GROWTH_RATE = 2;
 var SPAWN_MAX = 2;
-var MAX_NODES = 50;
+var MAX_NODES = 10000;
 var canvas = document.getElementById("myCanvas");
 var context = canvas.getContext('2d');
 var animationTimer; 
@@ -23,7 +23,7 @@ var sunlight = 1;
 var water = 1;
 
 var tree;
-
+var scale;
 
 
 
@@ -36,81 +36,101 @@ class Tree
         this.spawnTimer = 0.0;
         //array of nodes
         this.nodes = [];
+        this.ghosts = [];
+        //constructor       (id,    x,             y,            size,parent,growthRate,           direction,slope,tree)
         this.root = new Node("Root",canvas.width/2,canvas.height,1,null, 0,0,{ x: 0, y: 0});
-        this.apicalMeristem = new Node("ApicalMeristem",canvas.width/2,canvas.height - 1,1,this.root,STARTING_GROWTH_RATE, { x: 0, y: -1});
+        //constructor                 (id,              x,             y,                size,parent,growthRate,           direction,slope,tree)
+        this.apicalMeristem = new Node("ApicalMeristem",canvas.width/2,canvas.height - 1,1,this.root,STARTING_GROWTH_RATE, 1,{ x: 0, y: -1},this,0);
         //spawn the first true node
         var children = this.apicalMeristem.spawnChildren();
         this.nodes.push(children[0]);
 
     }
-    spawn()
+    branch()
     {
         var newNodes = []
-        
-        if(this.nodes.length < MAX_NODES)
+        for(var n in this.nodes)
         {
-            for(var n in this.nodes)
+            if(this.nodes[n].spawnCheck())
             {
-                if(this.nodes[n].spawnCheck())
+                var nodeBuffer = this.nodes[n].spawnChildren();
+                for(var node in nodeBuffer)
                 {
-                    var nodeBuffer = this.nodes[n].spawnChildren();
-                    for(var node in nodeBuffer)
-                    {
-                        newNodes.push(nodeBuffer[node]);
-                    }
-                }     
-            }
-
-            for(var newN in newNodes)
-            {
-                this.nodes.push(newNodes[newN]);
-            }
+                    newNodes.push(nodeBuffer[node]);
+                }
+            }     
         }
-        else
+
+        for(var newN in newNodes)
         {
-            for(var n in this.nodes)
-            {
-                this.nodes[n].grow();
-            }
+            this.nodes.push(newNodes[newN]);
         }
     }
     grow()
     {
-        this.growthTimer++;
-        this.spawnTimer++;
-        if(this.growthTimer > SEC_IN_MILISECONDS/FPS)
+        if(this.nodes.length < MAX_NODES)
         {
-            this.apicalMeristem.size += 0.2;
-            if(this.nodes.length < MAX_NODES)
+            this.growthTimer++;
+            this.spawnTimer++;
+            if(this.growthTimer > SEC_IN_MILISECONDS/FPS)
             {
-                for(var n in this.nodes)
+                this.apicalMeristem.offset.size += (0.2 * scale);
+                this.apicalMeristem.size += 0.2;
+
+                
+                    for(var n in this.nodes)
+                    {
+                        if(!this.nodes[n].static)
+                        {
+                            this.nodes[n].grow();
+                        }
+                        else
+                        {
+                            this.nodes[n].id = "Ghost";
+                            this.ghosts.push(this.nodes[n]);
+                            this.nodes.splice(n,1);
+                        }                        
+                    }
+
+                this.growthTimer = 0;
+                for(var g in this.ghosts)
                 {
-                    this.nodes[n].grow();
-                     
+                    this.ghosts[g].scale(scale);
                 }
             }
-
-            this.growthTimer = 0;
+            if(this.spawnTimer > (SEC_IN_MILISECONDS/FPS)*5)
+            {
+                this.branch();
+                this.spawnTimer = 0;
+            }
         }
 
-        if(this.spawnTimer > (SEC_IN_MILISECONDS/FPS)*5)
+    }
+
+    scale(sc)
+    {
+        this.apicalMeristem.scale(sc);
+        for(var n in this.nodes)
         {
-            this.spawn();
-
-            this.spawnTimer = 0;
+            this.nodes[n].scale(sc);
         }
-
     }
 
     draw()
     {
         //draw lines between nodes 
-        drawTrunk(this.nodes[0],this.apicalMeristem);
+        //drawTrunk(this.nodes[0].offset,this.apicalMeristem.offset);
         for(var n in this.nodes)
         {
             
-            drawLine(this.nodes[n],this.nodes[n].parent);
+            drawLine(this.nodes[n].offset,this.nodes[n].parent.offset);
             drawCircle(this.nodes[n]);
+        }
+
+        for(var g in this.ghosts)
+        {
+            drawLine(this.ghosts[g].offset,this.ghosts[g].parent.offset);
+            //drawCircle(this.ghosts[g]);
         }
 
     }
@@ -119,14 +139,13 @@ class Tree
 
 class Node
 {
-    constructor(id,x,y,size,parent, growthRate,direction,slope)
+    constructor(id,x,y,size,parent, growthRate,direction,slope,tree,gen)
     {
+
         if(parent != null)
         {
-            this.parent = parent; // the node that spawned this node
-        }
-        
-        
+            this.parent = parent; // the node that spawned this node  
+        }   
         this.x = x;
         this.y = y;
         this.size = size;
@@ -138,8 +157,18 @@ class Node
         this.hasChild = false;
         this.direction = direction;
         this.slope = slope;
-        
-        
+        this.tree = tree;
+        this.gen = gen;
+        this.static = false;
+        this.offset = {
+            x: this.x,
+            y: this.y,
+            size: this.size
+        };
+        if(this.id != "Root" && this.id != "ApicalMeristem")
+        {
+            this.scale(scale);
+        }
     }
     getDistanceFromMeristem()
     {
@@ -148,7 +177,6 @@ class Node
             distance: 0.0
         }
         var meristemFound = false;
-
         while(!ret.found)
         {
             //for each child
@@ -173,7 +201,6 @@ class Node
             }
            
         }
-
         return ret
     }
     getDistanceFromParent()
@@ -181,10 +208,8 @@ class Node
         //get the dx and dy, calc distance (check code from games)
         var dx;
         var dy;
-
         dx = this.x  - this.parent.x;
         dy = this.y  - this.parent.y;
-        
         var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
         dis -= this.size;
         dis -= this.parent.size;
@@ -194,26 +219,11 @@ class Node
     getCurrentSlope(x1,y1,x2,y2)
     {
         //Find the slope of the line 
-        var slope  = {
-            x: 0,
-            y: 0
-        };
+        
         var slopeX = (x1 - x2);
         var slopeY = (y1 - y2);
-
-        if(slopeX < 0)
-        {
-            slopeX *= -1;
-        } 
-
-        if(slopeY < 0)
-        {
-            slopeY *= -1;
-        } 
-
         var isDivisible = true;
         var factor = 1;
-
         var order = {
             first: {
                 axis: "",
@@ -224,6 +234,20 @@ class Node
                 value: 0
             }
         }
+        var slope  = {
+            x: 0,
+            y: 0
+        };
+
+        if(slopeX < 0)
+        {
+            slopeX *= -1;
+        } 
+
+        if(slopeY < 0)
+        {
+            slopeY *= -1;
+        } 
 
         if(slopeX < slopeY)
         {
@@ -243,8 +267,9 @@ class Node
         while(isDivisible)
         {   
             var temp = order.first.value/factor;
+            var tempSecond = order.second.value/factor;
             
-            if(temp > 1)
+            if(temp > 0 && tempSecond > 1)
             {
                 factor++;
             }
@@ -253,22 +278,17 @@ class Node
                 if(factor > 1)
                 {
                     factor--;
+                    order.second.value = order.second.value/factor;
+                }
+                else
+                {
+                    order.second.value = 1;
                 }
                 order.first.value = order.first.value/factor;
                 isDivisible = false;
 
             }
         }
-
-        if(factor > 1)
-        {
-            order.second.value = order.second.value/factor;
-        }
-        else
-        {
-            order.second.value = 1;
-        }
-
 
         if(order.first.axis == "x")
         {
@@ -290,7 +310,7 @@ class Node
         return slope
     }
 
-    //this might be taking it too far. Ill come back to this later
+    //Come back to this and make it more organic
     getGrowthPotential()
     {
 
@@ -298,16 +318,9 @@ class Node
         var resourceAvailabilityWeighting = (water + sunlight)/2;
         if(this.id == "Bud")
         {
-
-            /*
-                distancce from meristem
-            */
-            
-
-            //var distanceThreshold = 4;
-            //var distance = this.getDistanceFromMeristem().distance/distanceThreshold;
             var distance = 0;
-            if(this.getDistanceFromMeristem().distance > 1)
+            var distanceFromMeristem = this.getDistanceFromMeristem().distance;
+            if(distanceFromMeristem > 1)
             {
                 distance = 1;
             }
@@ -320,22 +333,6 @@ class Node
         }
         else
         {
-            /*
-                - distance from parent
-                - size vs parent size
-            */
-            /*var distanceThreshold;
-            if(this.parent.id == "ApicalMeristem")
-            {
-                distanceThreshold = (canvas.height/3);
-            }
-            else
-            {
-                distanceThreshold = this.parent.getDistanceFromParent() * 0.99;
-            }
-            
-
-            var distance = this.getDistanceFromParent()/distanceThreshold;*/
             var distance = 0;
             if(this.getDistanceFromParent() > 25)
             {
@@ -350,15 +347,39 @@ class Node
 
         }
 
-        
+        if(this.gen > 8)
+        {
+
+            potential = 0;
+        }
 
         return potential;
+    }
+    scale(sc)
+    {
+        if(this.id == "Ghost")
+        {
+            this.size += 0.2;
+        }
+        this.offset.size = this.size * sc;
+
+        var disX = this.x - this.tree.root.x;
+        var disY = this.y - this.tree.root.y;
+
+        this.offset.x = (disX * sc) + this.tree.root.x; 
+        this.offset.y = (disY * sc) + this.tree.root.y;
+
+        if((this.offset.x > canvas.width || this.offset.x < 0 || this.offset.y < 0) && (scale - 0.2) > 0)
+        {
+
+            setScale(scale - 0.2);
+        }
     }
     grow()
     {
 
         //I should grow based on slope
-
+        
         if(this.slope.x != 0)
         {
             this.growthX = this.parent.growthX + (this.growthRate * this.slope.x) * this.direction;
@@ -368,9 +389,16 @@ class Node
 
         this.x += this.growthX;
         this.y -= this.growthY;
+        
+        
 
         //change this to organic value
         this.size += 0.2;
+
+        this.scale(scale);
+
+       
+        
     }
 
     spawnCheck()
@@ -380,9 +408,19 @@ class Node
         {
             var roll = Math.random();
             var potential = this.getGrowthPotential();
+            
+            
             if(roll < potential)
             {
                 return true
+            }
+            
+        }
+        else
+        {
+            if(this.getDistanceFromMeristem().distance >= 4)
+            {
+                this.setStaticToTrue();
             }
         }
         return false 
@@ -426,18 +464,23 @@ class Node
             if(i == 0)
             {
                 
-                x = vects[0].x;
-                y = vects[0].y;
+                x = vects.n1.v1.x;
+                y = vects.n1.v1.y;
+
+                
                 
             }
             else
             {
-                x = vects[2].x;
-                y = vects[2].y;
+                x = vects.n1.v2.x;
+                y = vects.n1.v2.y;
+                
                
             }
+            slope = this.getCurrentSlope(x,y,vects.n1.v4.x,vects.n1.v4.y);
+            
 
-            slope = this.getCurrentSlope(x,y,this.x,this.y);
+
             //set x and y to slop + growth rate
             //get x relative to this.x. Set direction
             //set size to the same is the current size (maybe a touch smaller?)
@@ -455,10 +498,12 @@ class Node
 
             
             size = this.size * 0.2;
+            var gen = this.gen + 1;
 
 
-
-            var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope);
+            var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope, this.tree, gen);
+            newNode.grow();
+            this.hasChild = true;
             children.push(newNode);
             this.children.push(newNode);
         }
@@ -482,6 +527,7 @@ class Node
             this.id = "Bud";
         }
         var id = "Meristem";
+        var gen = this.gen + 1;
         var x;
         var y;
         var size;
@@ -512,10 +558,12 @@ class Node
         //make it 80% of the size
         size = this.size * 0.8;
 
-        //get the direction on the x axis
+        //TODO: deviate upwards slightly 
+
+        var gen = this.gen + 2;
         
 
-        var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope);
+        var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope, this.tree, gen);
         children.push(newNode);
         this.children.push(newNode);
         return children;
@@ -536,6 +584,10 @@ class Node
         
         return children
     }
+    setStaticToTrue()
+    {
+        this.static = true;
+    }
 }
 
 start();
@@ -544,6 +596,7 @@ function start()
 {
     drawBackground();
     tree = new Tree();
+    scale = 1;
 
     if(animationTimer != undefined || animationTimer != null)
     {
@@ -595,139 +648,69 @@ function drawBackground()
     })();
 }
 
-function drawTrunk(node1,node2){
-
-
-    var vectors = getPolygonVerts(node1,node2);
-
-    context.beginPath();
-    context.moveTo(node1.x,node1.y);
-    context.lineTo(node2.x,node2.y);
-    context.lineWidth = 3;
-    context.strokeStyle = "white";
-    context.stroke();
-
-
-    context.beginPath();
-    context.moveTo(vectors[0].x,vectors[0].y);
-    context.lineTo(vectors[1].x,vectors[1].y);
-    context.lineWidth = 3;
-    context.strokeStyle = "blue";
-    context.stroke();
-
-    context.beginPath();
-    context.moveTo(vectors[2].x,vectors[2].y);
-    context.lineTo(vectors[3].x,vectors[3].y);
-    context.lineWidth = 3;
-    context.strokeStyle = "blue";
-    context.stroke();
-
-    context.beginPath();
-    context.moveTo(node1.x - node1.size, node1.y - node1.size/2);
-    context.lineTo(node1.x - node1.size, node1.y);
-    context.lineWidth = 3;
-    context.strokeStyle = "blue";
-    context.stroke();
-
-    context.beginPath();
-    context.moveTo(node1.x + node1.size, node1.y - node1.size/2);
-    context.lineTo(node1.x + node1.size, node1.y);
-    context.lineWidth = 3;
-    context.strokeStyle = "blue";
-    context.stroke();
-}
 function drawLine(node1,node2)
 {   
-    var vectors = getPolygonVerts(node1,node2);
-
-
-   /* var topRight = 0;
-    var topLeft = 0;
-    var bottomLeft = 0;
-    var bottomRight = 0;
-
-    var checkSums = [];
-    var temp =0.0;
-    for(var v in vectors)
-    {
-        temp += vectors[v].x;
-        temp += vectors[v].y;
-        checkSums.push(temp);
-    }
-
-    
-
-    for(var sum in checkSums)
-    {
-        if(checkSums[sum] < checkSums[topRight])
-        {
-            topRight = sum;
-        }
-        else if(checkSums[sum] > checkSums[bottomLeft])
-        {
-            bottomLeft = sum;
-        }
-        
-    }*/
-        
-    
-    
-    /*context.fillStyle = '#f00';
-    context.beginPath();
-    context.moveTo(vectors[0].x, vectors[0].y);
-    context.lineTo(vectors[2].x, vectors[2].y);
-    context.lineTo(vectors[3].x, vectors[3].y);
-    context.lineTo(vectors[1].x, vectors[1].y);
-    context.closePath();
-    context.fill();*/
-
-    
+    //var vectors = getPolygonVerts(node1,node2);
 
     context.beginPath();
     context.moveTo(node1.x,node1.y);
     context.lineTo(node2.x,node2.y);
-    context.lineWidth = 3;
-    context.strokeStyle = "white";
+    context.lineWidth = node1.size;
+    context.strokeStyle = "green";
     context.stroke();
 
-    context.beginPath();
-    context.moveTo(vectors[0].x,vectors[0].y);
-    context.lineTo(vectors[1].x,vectors[1].y);
-    context.lineWidth = 3;
+    /*context.beginPath();
+    context.moveTo(vectors.n1.v1.x,vectors.n1.v1.y);
+    context.lineTo(vectors.n2.v1.x,vectors.n2.v1.y);
+    context.lineWidth = node1.size/8;
     context.strokeStyle = "blue";
     context.stroke();
 
     context.beginPath();
-    context.moveTo(vectors[2].x,vectors[2].y);
-    context.lineTo(vectors[3].x,vectors[3].y);
-    context.lineWidth = 3;
+    context.moveTo(vectors.n1.v3.x,vectors.n1.v3.y);
+    context.lineTo(vectors.n1.v4.x,vectors.n1.v4.y);
+    context.lineWidth = node1.size/8;
     context.strokeStyle = "blue";
     context.stroke();
+
+    context.beginPath();
+    context.moveTo(vectors.n1.v2.x,vectors.n1.v2.y);
+    context.lineTo(vectors.n2.v2.x,vectors.n2.v2.y);
+    context.lineWidth = node1.size/8;
+    context.strokeStyle = "blue";
+    context.stroke();*/
 
 }
 
 function drawCircle(node1)
 {
     var color = "";
-    if(node1.id == "Bud")
+
+    switch(node1.id)
     {
-        color = "green";
+        case "Bud":
+            color = "green";
+            break;
+        case "Meristem":
+            color = "red";
+            break;
+        case "Ghost":
+            color = "white";
+            break;
+            default:
+                color = "blue";
+
     }
-    else if (node1.id == "Meristem")
-    {
-        color = "red";
-    }
-    else
-    {
-        color = "blue"
-    }
+   
     context.strokeStyle = color;
-    context.fillStyle = "red";
+    context.fillStyle = "green";
     context.beginPath();
     
+    context.lineWidth = 2;
     //draw arc
-    context.arc(node1.x,node1.y,node1.size,0,Math.PI*2,true)
+    context.arc(node1.offset.x,node1.offset.y,node1.offset.size,0,Math.PI*2,true)
     context.stroke();
+    context.fill();
 
 }
 
@@ -741,6 +724,7 @@ function getPolygonVerts(node1,node2)
 
     var magnitude = Math.sqrt(Math.pow(newX,2) + Math.pow(newY,2));
 
+    //Normalized points (left and right of node)
     var vector1 = {
       x:newX/magnitude,
       y:newY/magnitude
@@ -762,8 +746,39 @@ function getPolygonVerts(node1,node2)
       y:newY/magnitude
     }
 
+    //Top and bottom of node
+
+    dx = node1.x - node2.x;
+    dy = node1.y - node2.y;
+
+    newX = dx;
+    newY = dy;
+
+    magnitude = Math.sqrt(Math.pow(newX,2) + Math.pow(newY,2));
+
+    var vector5 = {
+      x:newX/magnitude,
+      y:newY/magnitude
+    }
 
 
+    var vector6 = {
+      x:newX/magnitude,
+      y:newY/magnitude
+    }
+
+    var vector7 = {
+      x:newX/magnitude,
+      y:newY/magnitude
+    }
+
+    var vector8 = {
+      x:newX/magnitude,
+      y:newY/magnitude
+    }
+
+
+    //left and right
     vector1.x *= node1.size;
     vector1.y *= node1.size;
 
@@ -791,13 +806,73 @@ function getPolygonVerts(node1,node2)
     vector4.x += node2.x;
     vector4.y += node2.y; 
 
-    var vectors = [];
-    vectors.push(vector1);
-    vectors.push(vector2);
-    vectors.push(vector3);
-    vectors.push(vector4);
+    //Top and bottom
+    vector5.x *= node1.size;
+    vector5.y *= node1.size;
+
+    vector6.x *= node2.size;
+    vector6.y *= node2.size; 
+
+
+    vector5.x += node1.x;
+    vector5.y += node1.y;
+    
+    vector6.x += node2.x;
+    vector6.y += node2.y; 
+
+
+    vector7.x *= -node1.size;
+    vector7.y *= -node1.size;
+
+    vector8.x *= -node2.size;
+    vector8.y *= -node2.size; 
+
+
+    vector7.x += node1.x;
+    vector7.y += node1.y;
+    
+    vector8.x += node2.x;
+    vector8.y += node2.y; 
+
+    var vectors = {
+        n1: {
+            v1: null,
+            v2: null,
+            v3: null,
+            v4: null
+        },
+        n2: {
+            v1: null,
+            v2: null,
+            v3: null,
+            v4: null
+        },
+    };
+
+    vectors.n1.v1 = vector1;
+    vectors.n1.v2 = vector3;
+
+    vectors.n2.v1 = vector2;
+    vectors.n2.v2 = vector4;
+
+
+    vectors.n1.v3 = vector5;
+    vectors.n1.v4 = vector7;
+
+    vectors.n2.v3 = vector6;
+    vectors.n2.v4 = vector8;
+
+
+
+
 
     return vectors
+}
+
+function setScale(sc)
+{
+    scale = sc;    
+    tree.scale(sc);
 }
 
 
