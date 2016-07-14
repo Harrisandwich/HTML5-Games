@@ -12,10 +12,11 @@
 var SEC_IN_MILISECONDS = 1000;
 var FPS =60;
 var STARTING_GROWTH_RATE = 2;
+var decayRate = 1;
 var SPAWN_MAX = 2;
-var MAX_NODES = 10000;
-var canvas = document.getElementById("myCanvas");
-var context = canvas.getContext('2d');
+var MAX_NODES = 500;
+var canvas;
+var context;
 var animationTimer; 
 
 
@@ -24,6 +25,12 @@ var water = 1;
 
 var tree;
 var scale;
+
+
+var leaves = false;
+var color = false;
+var obsticles = false;
+var wireframe = false;
 
 
 
@@ -68,7 +75,7 @@ class Tree
     }
     grow()
     {
-        if(this.nodes.length < MAX_NODES)
+        if(this.nodes.length + this.ghosts.length < MAX_NODES)
         {
             this.growthTimer++;
             this.spawnTimer++;
@@ -77,7 +84,7 @@ class Tree
                 this.apicalMeristem.offset.size += (0.2 * scale);
                 this.apicalMeristem.size += 0.2;
 
-                
+                  
                     for(var n in this.nodes)
                     {
                         if(!this.nodes[n].static)
@@ -88,14 +95,19 @@ class Tree
                         {
                             this.nodes[n].id = "Ghost";
                             this.ghosts.push(this.nodes[n]);
-                            this.nodes.splice(n,1);
+                            this.nodes.splice(n,1); 
+                            n--;
                         }                        
                     }
+
+                   
+
+                    
 
                 this.growthTimer = 0;
                 for(var g in this.ghosts)
                 {
-                    this.ghosts[g].scale(scale);
+                    this.ghosts[g].grow();
                 }
             }
             if(this.spawnTimer > (SEC_IN_MILISECONDS/FPS)*5)
@@ -104,6 +116,34 @@ class Tree
                 this.spawnTimer = 0;
             }
         }
+        else
+        {
+            pause();
+            var leavesArr = [];
+            for(var n in this.nodes)
+            {
+                
+                this.nodes[n].id = "Ghost";
+                if(leaves)
+                {
+                    leavesArr.push(this.nodes[n]);
+                }
+                this.ghosts.push(this.nodes[n]);
+            }
+            this.nodes = []
+            drawBackground();
+            this.draw();
+            if(leaves)
+            {
+                for(var l in leavesArr)
+                {
+                    drawLeaf(leavesArr[l]);
+                }
+            }
+            $("#pause").attr("disabled", "true");
+            
+        }
+
 
     }
 
@@ -135,6 +175,8 @@ class Tree
 
     }
 
+
+
 }
 
 class Node
@@ -158,13 +200,14 @@ class Node
         this.direction = direction;
         this.slope = slope;
         this.tree = tree;
-        this.gen = gen;
+        this.health = 100;
         this.static = false;
         this.offset = {
             x: this.x,
             y: this.y,
             size: this.size
         };
+
         if(this.id != "Root" && this.id != "ApicalMeristem")
         {
             this.scale(scale);
@@ -211,8 +254,10 @@ class Node
         dx = this.x  - this.parent.x;
         dy = this.y  - this.parent.y;
         var dis = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-        dis -= this.size;
-        dis -= this.parent.size;
+
+        //dis -= this.size;
+        //dis -= this.parent.size;
+
         return dis
     }
 
@@ -315,43 +360,40 @@ class Node
     {
 
         var potential = 0.0;
-        var resourceAvailabilityWeighting = (water + sunlight)/2;
-        if(this.id == "Bud")
+        
+
+        //The plant should have higher potential the lower its health.
+        //this will create shorter, stumpier plants when there is no water or sun.
+
+        if(this.health != 0)
         {
-            var distance = 0;
-            var distanceFromMeristem = this.getDistanceFromMeristem().distance;
-            if(distanceFromMeristem > 3)
+        
+        
+            var healthWeighting = ((100 - this.health)/100)
+
+            if(this.id == "Bud")
             {
-                distance = 1;
+                var distance = 0;
+                var distanceFromMeristem = this.getDistanceFromMeristem().distance;
+
+
+                potential = (distanceFromMeristem * 0.1) + healthWeighting;
+                
             }
             else
             {
-                distance = 0;
-            }
+                var distance = 0;
+                var distanceFromParent = this.getDistanceFromParent();
+                var parentDistanceFromParent = this.parent.getDistanceFromParent();
 
-            potential =  resourceAvailabilityWeighting * distance;
-        }
-        else
-        {
-            var distance = 0;
-            if(this.getDistanceFromParent() > 25)
-            {
-                distance = 1;
-            }
-            else
-            {
-                distance = 0;
-            }
-           
-            potential = distance * resourceAvailabilityWeighting;
+                var distanceFactor = distanceFromParent/parentDistanceFromParent;
 
+                potential = distanceFactor + healthWeighting;
+                
+            }
         }
 
-        /*if(this.gen > 8 && this.id == "Meristem")
-        {
-
-            this.id = "Bud";
-        }*/
+        
 
         return potential;
     }
@@ -384,7 +426,8 @@ class Node
     {
 
         //I should grow based on slope
-        
+
+
         
         if(this.slope.x != 0)
         {
@@ -411,8 +454,10 @@ class Node
     spawnCheck()
     {
         //check if the node should spawn children
+
         if(!this.hasChild)
         {
+            
             var roll = Math.random();
             var potential = this.getGrowthPotential();
             
@@ -424,7 +469,7 @@ class Node
         }
         else
         {
-            if(this.getDistanceFromMeristem().distance >= 4)
+            if(this.getDistanceFromMeristem().distance >= 3)
             {
                 this.setStaticToTrue();
             }
@@ -508,6 +553,12 @@ class Node
 
 
             var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope, this.tree, gen);
+            var health = this.health - (decayRate + (decayRate - (water+sunlight/2)));
+
+            if(health <= 0)
+            {
+                newNode.health = 0;
+            }
             newNode.grow();
             this.hasChild = true;
             children.push(newNode);
@@ -587,7 +638,14 @@ class Node
         var gen = this.gen + 2;
         
 
+
         var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope, this.tree, gen);
+        var health = this.health - (decayRate + (decayRate - (water+sunlight/2)));
+
+        if(health <= 0)
+        {
+            newNode.growthRate = 0;
+        }
         children.push(newNode);
         this.children.push(newNode);
         return children;
@@ -603,6 +661,11 @@ class Node
         }
         else if (this.id == "Meristem" || this.id == "ApicalMeristem" )
         {
+            /*if(this.gen%this.tree.nodes.length == 4 || this.gen%this.tree.nodes.length == 5)
+            {
+                children = this.branch();
+            }
+            */
             children = this.extend();
         }
         
@@ -614,11 +677,19 @@ class Node
     }
 }
 
-start();
+
+$(document).ready(function(){
+    canvas = document.getElementById("myCanvas");
+    context = canvas.getContext('2d');
+    start();
+})
+
+
 
 function start()
 {
     drawBackground();
+    $("#pause").attr("disabled", false);
     tree = new Tree();
     scale = 1;
 
@@ -732,6 +803,22 @@ function drawCircle(node1)
     context.lineWidth = 2;
     //draw arc
     context.arc(node1.offset.x,node1.offset.y,node1.offset.size,0,Math.PI*2,true)
+    context.stroke();
+    context.fill();
+
+}
+
+function drawLeaf(node)
+{
+    var color = "rgba(0,100,0,0.5)";
+
+    context.strokeStyle = color;
+    context.fillStyle = color;
+    context.beginPath();
+    
+    context.lineWidth = 2;
+    //draw arc
+    context.arc(node.offset.x,node.offset.y,node.offset.size*10,0,Math.PI*2,true)
     context.stroke();
     context.fill();
 
@@ -894,10 +981,99 @@ function getPolygonVerts(node1,node2)
 
 function setScale(sc)
 {
+    $("#zoomLabel").html(sc+"x");
     scale = sc;    
     tree.scale(sc);
 }
 
+
+function pause()
+{
+    if(animationTimer != undefined || animationTimer != null)
+    {
+        $("#pause").attr("value", "Resume");
+        $("#pause").attr("onclick", "resume()");
+        clearInterval(animationTimer);
+        animationTimer = null;
+        
+    }
+   
+}
+
+function resume()
+{
+    if(animationTimer == undefined || animationTimer == null)
+    {
+        $("#pause").attr("value", "Pause");
+        $("#pause").attr("onclick", "pause()");
+        animationTimer = setInterval(mainLoop, SEC_IN_MILISECONDS/FPS);
+    }
+   
+}
+
+function restart()
+{
+    start();
+}
+
+
+function setSpeed(speed)
+{
+    //set animation timer speed
+
+    if(animationTimer != undefined || animationTimer != null)
+    {
+        
+        clearInterval(animationTimer);
+        animationTimer = null;
+        
+    }
+    FPS = speed;
+    if(animationTimer == undefined || animationTimer == null)
+    {
+        $("#speedLabel").html(speed+" fps");
+        animationTimer = setInterval(mainLoop, SEC_IN_MILISECONDS/FPS);
+    }
+
+}
+
+function setSize(size)
+{
+    //set max number of nodes?
+    MAX_NODES = size;
+    $("#sizeLabel").html(size+ " nodes")
+}
+
+function setWater(waterAmnt)
+{
+    water = waterAmnt;
+}
+
+function setSunlight(sunAmnt)
+{
+    sunlight = sunAmnt;
+}
+
+
+function setObsticles(val)
+{
+
+}
+
+function setColors(val)
+{
+
+}
+
+function toggleWireframe(val)
+{
+    wireframe = val;
+}
+
+function setLeaves(val)
+{
+    leaves = val;
+}
 
 
 function closeMenu()
