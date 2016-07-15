@@ -11,8 +11,8 @@
     //FUN NOTE: Maybe obsticales?!?
 var SEC_IN_MILISECONDS = 1000;
 var FPS =60;
-var STARTING_GROWTH_RATE = 2;
-var decayRate = 1;
+var STARTING_GROWTH_RATE = 1;
+var decayRate = 6;
 var SPAWN_MAX = 2;
 var MAX_NODES = 500;
 var canvas;
@@ -20,20 +20,135 @@ var context;
 var animationTimer; 
 
 
-var sunlight = 1;
-var water = 1;
+var sunlight;
+var water;
 
 var tree;
-var scale;
+var scale = 1;
 
-
+var logActive = false;
 var leaves = false;
-var color = false;
+var colors = false;
 var obsticles = false;
 var wireframe = false;
+var random = false;
+var auto = false;
+
+var testNumber = 1;
+var ruler;
+var resultsLog;
+var shape;
 
 
 
+class log
+{
+    constructor(area)
+    {
+        this.textArea = area;
+    }
+
+    writeLine(text)
+    {
+        $(this.textArea).append("\n"+text);
+    }
+
+    clear()
+    {
+        $(this.textArea).text("");
+    }
+}
+class Ruler
+{
+    constructor(inc,originX,originY)
+    {
+        this.increment = inc;
+
+        this.originX = originX;
+        this.originY = originY;
+        
+
+        this.height = this.originY/scale; 
+        
+
+        this.yAxis = [];
+
+
+        this.generate();
+    }
+
+    generate()
+    {
+     
+        /*Properly adjust this for scale*/   
+        //draw line from origin to top of screen
+        this.yAxis = [];
+        
+
+        
+        this.height = this.originY/scale; 
+        
+
+        
+        for(var i = 0; i <= this.height; i++)
+        {
+            if(i%this.increment == 0)
+            {
+                var point = {
+                    y: this.originY - (i*scale),
+                    value: i
+                }
+                this.yAxis.push(point);
+            }
+        }
+        
+        //draw all text from origin to top of screen
+    }
+
+    draw()
+    {
+        //draw first line 
+        context.beginPath();
+        context.moveTo(this.originX,this.originY);
+        context.lineTo(this.originX,0);
+        context.lineWidth = 5;
+        context.strokeStyle = "white";
+        context.stroke();
+
+        //draw 0 text
+        context.beginPath();
+        context.moveTo(this.originX - 20,this.originY);
+        context.lineTo(this.originX,this.originY);
+        context.lineWidth = 2;
+        context.strokeStyle = "white";
+        context.stroke();
+        this.drawSmallText("0",this.originX - 60,this.originY);
+
+
+        for(var i = 0; i < this.yAxis.length; i++)
+        {
+            context.beginPath();
+            context.moveTo(this.originX - 20,this.yAxis[i].y);
+            context.lineTo(this.originX,this.yAxis[i].y);
+            context.lineWidth = 2;
+            context.strokeStyle = "white";
+            context.stroke();
+            this.drawSmallText(this.yAxis[i].value,this.originX - 60,this.yAxis[i].y);
+        }
+    }
+
+    drawSmallText(text,textX,textY)
+    {
+        var fontSize = 20 * scale;
+        context.strokeStyle = "white";
+        context.fillStyle = "white";
+        context.font = fontSize+"px Arial";
+        context.fillText(text,textX,textY);
+    }
+
+
+
+}
 
 class Tree
 {
@@ -52,6 +167,44 @@ class Tree
         var children = this.apicalMeristem.spawnChildren();
         this.nodes.push(children[0]);
 
+    }
+    getHeight()
+    {
+
+        var highestNode = this.root;
+        var max = canvas.height/scale;  
+
+        var height = 0; 
+
+        if(this.ghosts.length > 0)
+        {
+            for(var g = this.ghosts.length - 1; g >= 0; g--)
+            {
+                if(this.ghosts[g].y < highestNode.y)
+                {
+                    highestNode = this.ghosts[g];
+                }
+            }
+        }
+
+        if(this.nodes.length > 0)
+        {
+            for(var n = this.nodes.length - 1; n >= 0; n--)
+            {
+                if(this.nodes[n].y < highestNode.y)
+                {
+                    highestNode = this.nodes[n];
+                }
+            }
+        }
+
+
+        height = Math.round(max - highestNode.y);
+
+
+
+        
+        return height
     }
     branch()
     {
@@ -99,10 +252,7 @@ class Tree
                             n--;
                         }                        
                     }
-
-                   
-
-                    
+  
 
                 this.growthTimer = 0;
                 for(var g in this.ghosts)
@@ -110,7 +260,7 @@ class Tree
                     this.ghosts[g].grow();
                 }
             }
-            if(this.spawnTimer > (SEC_IN_MILISECONDS/FPS)*5)
+            if(this.spawnTimer > (SEC_IN_MILISECONDS/FPS)*2)
             {
                 this.branch();
                 this.spawnTimer = 0;
@@ -140,7 +290,18 @@ class Tree
                     drawLeaf(leavesArr[l]);
                 }
             }
+            ruler.draw();
             $("#pause").attr("disabled", "true");
+
+            if(auto)
+            {
+
+                setTimeout(function(){
+                    setScale(1);
+                    restart();
+
+                },2000);
+            }
             
         }
 
@@ -154,6 +315,12 @@ class Tree
         {
             this.nodes[n].scale(sc);
         }
+
+        for(var g in this.ghosts)
+        {
+            this.ghosts[g].scale(sc);
+        }
+
     }
 
     draw()
@@ -162,9 +329,15 @@ class Tree
         //drawTrunk(this.nodes[0].offset,this.apicalMeristem.offset);
         for(var n in this.nodes)
         {
-            
-            drawLine(this.nodes[n].offset,this.nodes[n].parent.offset);
-            drawCircle(this.nodes[n]);
+            if(!colors)
+            {
+                drawLine(this.nodes[n].offset,this.nodes[n].parent.offset);
+                drawCircle(this.nodes[n]);
+            }
+            else
+            {
+
+            }
         }
 
         for(var g in this.ghosts)
@@ -365,11 +538,11 @@ class Node
         //The plant should have higher potential the lower its health.
         //this will create shorter, stumpier plants when there is no water or sun.
 
-        if(this.health != 0)
+        if(this.health > 0)
         {
         
         
-            var healthWeighting = ((100 - this.health)/100)
+            var healthWeighting = this.health/100;
 
             if(this.id == "Bud")
             {
@@ -377,7 +550,7 @@ class Node
                 var distanceFromMeristem = this.getDistanceFromMeristem().distance;
 
 
-                potential = (distanceFromMeristem * 0.1) + healthWeighting;
+                potential = (distanceFromMeristem * 0.1) * healthWeighting;
                 
             }
             else
@@ -388,7 +561,7 @@ class Node
 
                 var distanceFactor = distanceFromParent/parentDistanceFromParent;
 
-                potential = distanceFactor + healthWeighting;
+                potential = distanceFactor * healthWeighting;
                 
             }
         }
@@ -411,13 +584,16 @@ class Node
         this.offset.x = (disX * sc) + this.tree.root.x; 
         this.offset.y = (disY * sc) + this.tree.root.y;
 
-        if(this.offset.x > canvas.width || this.offset.x < 0 || this.offset.y < 0 )
+        if(animationTimer != null)
         {
-            if((scale - 0.2) > 0)
+            if(this.offset.x > canvas.width || this.offset.x < 0 || this.offset.y < 0 )
             {
-                setScale(scale - 0.2);
+                if((scale - 0.3) > 0)
+                {
+                    setScale(scale - 0.3);
+                }
+                
             }
-            
         }
 
 
@@ -427,22 +603,30 @@ class Node
 
         //I should grow based on slope
 
-
-        
-        if(this.slope.x != 0)
+        if(this.health != 0)
         {
-            this.growthX = this.parent.growthX + (this.growthRate * this.slope.x) * this.direction;
+        
+            
+            if(this.slope.x != 0)
+            {
+                this.growthX = this.parent.growthX + (this.growthRate * this.slope.x) * this.direction;
+            }
+
+            this.growthY = this.parent.growthY + (this.slope.y * (this.growthRate * water) );
+
+            this.x += this.growthX;
+            this.y -= this.growthY;
+            
+            
+
+            //change this to organic value
+            this.size += (0.2 * this.growthRate) * sunlight;
         }
-
-        this.growthY = this.parent.growthY + (this.slope.y * this.growthRate);
-
-        this.x += this.growthX;
-        this.y -= this.growthY;
-        
-        
-
-        //change this to organic value
-        this.size += 0.2;
+        else
+        {
+            this.x += this.parent.growthX;
+            this.y -= this.parent.growthY;
+        }
 
         this.scale(scale);
     
@@ -465,6 +649,7 @@ class Node
             {
                 return true
             }
+
             
         }
         else
@@ -492,6 +677,46 @@ class Node
         var side;
 
         this.id = "Branch";
+
+
+
+
+        /*if(this.colour.red == 255 && this.colour.green == 0)
+        {
+            this.redToGreen = true;
+            this.greenToBlue = false;
+            this.blueToRed = false;
+        }
+        else if(this.colour.green == 255 && this.colour.blue == 0)
+        {
+            this.redToGreen = false;
+            this.greenToBlue = true;
+            this.blueToRed = false;
+        }
+        else if(this.colour.blue == 255 && this.colour.red == 0)
+        {
+            this.redToGreen = false;
+            this.greenToBlue = false;
+            this.blueToRed = true;
+        }
+
+        
+
+        if(this.redToGreen)
+        {
+            this.colour.red -= 1;
+            this.colour.green += 1;
+        }
+        else if(this.greenToBlue)
+        {
+            this.colour.green -= 1;
+            this.colour.blue += 1;
+        }
+        if(this.blueToRed)
+        {
+            this.colour.blue -= 1;
+            this.colour.red += 1;
+        }*/
 
         for(var i = 0; i < 2; i++)
         {
@@ -538,6 +763,8 @@ class Node
                 
             }
             slope.y += deviation.y;
+
+            slope.y *= shape;
             if(x > this.x)
             {
                 direction = 1;
@@ -558,6 +785,10 @@ class Node
             if(health <= 0)
             {
                 newNode.health = 0;
+            }
+            else
+            {
+                newNode.health = health;
             }
             newNode.grow();
             this.hasChild = true;
@@ -612,6 +843,7 @@ class Node
         }
 
         slope.y += deviation.y;
+        slope.y *= shape;
         
         // get the slop of the current branch
         slope = this.getCurrentSlope(this.x,this.y,this.parent.x,this.parent.y);
@@ -640,11 +872,15 @@ class Node
 
 
         var newNode = new Node(id,x,y,size,this,this.growthRate,direction,slope, this.tree, gen);
-        var health = this.health - (decayRate + (decayRate - (water+sunlight/2)));
+        var health = this.health - ((decayRate*1.5) + ((decayRate * 1.5) - (water+sunlight/2)));
 
         if(health <= 0)
         {
-            newNode.growthRate = 0;
+            newNode.health = 0;
+        }
+        else
+        {
+            newNode.health = health;
         }
         children.push(newNode);
         this.children.push(newNode);
@@ -679,6 +915,7 @@ class Node
 
 
 $(document).ready(function(){
+    resultsLog = new log($("#logBox"));
     canvas = document.getElementById("myCanvas");
     context = canvas.getContext('2d');
     start();
@@ -689,9 +926,10 @@ $(document).ready(function(){
 function start()
 {
     drawBackground();
+    setControls();
     $("#pause").attr("disabled", false);
     tree = new Tree();
-    scale = 1;
+    ruler = new Ruler(30,canvas.width - 1,canvas.height);
 
     if(animationTimer != undefined || animationTimer != null)
     {
@@ -711,6 +949,7 @@ function mainLoop()
     drawBackground();
     tree.grow();
     tree.draw();
+    ruler.draw();
 }
 
 function drawBackground()
@@ -744,35 +983,43 @@ function drawBackground()
 
 function drawLine(node1,node2)
 {   
-    //var vectors = getPolygonVerts(node1,node2);
+    
+    if(!wireframe)
+    {
+        
+        context.beginPath();
+        context.moveTo(node1.x,node1.y);
+        context.lineTo(node2.x,node2.y);
+        context.lineWidth = node1.size;
+        context.strokeStyle = "green";
+        context.stroke();
 
-    context.beginPath();
-    context.moveTo(node1.x,node1.y);
-    context.lineTo(node2.x,node2.y);
-    context.lineWidth = node1.size;
-    context.strokeStyle = "green";
-    context.stroke();
+        
+    }
+    else
+    {
+        var vectors = getPolygonVerts(node1,node2);
+        context.beginPath();
+        context.moveTo(node1.x,node1.y);
+        context.lineTo(node2.x,node2.y);
+        context.lineWidth = 1;
+        context.strokeStyle = "white";
+        context.stroke();
 
-    /*context.beginPath();
-    context.moveTo(vectors.n1.v1.x,vectors.n1.v1.y);
-    context.lineTo(vectors.n2.v1.x,vectors.n2.v1.y);
-    context.lineWidth = node1.size/8;
-    context.strokeStyle = "blue";
-    context.stroke();
+        context.beginPath();
+        context.moveTo(vectors.n1.v1.x,vectors.n1.v1.y);
+        context.lineTo(vectors.n2.v1.x,vectors.n2.v1.y);
+        context.lineWidth = 1;
+        context.strokeStyle = "blue";
+        context.stroke();
 
-    context.beginPath();
-    context.moveTo(vectors.n1.v3.x,vectors.n1.v3.y);
-    context.lineTo(vectors.n1.v4.x,vectors.n1.v4.y);
-    context.lineWidth = node1.size/8;
-    context.strokeStyle = "blue";
-    context.stroke();
-
-    context.beginPath();
-    context.moveTo(vectors.n1.v2.x,vectors.n1.v2.y);
-    context.lineTo(vectors.n2.v2.x,vectors.n2.v2.y);
-    context.lineWidth = node1.size/8;
-    context.strokeStyle = "blue";
-    context.stroke();*/
+        context.beginPath();
+        context.moveTo(vectors.n1.v2.x,vectors.n1.v2.y);
+        context.lineTo(vectors.n2.v2.x,vectors.n2.v2.y);
+        context.lineWidth = 1;
+        context.strokeStyle = "blue";
+        context.stroke();
+    }
 
 }
 
@@ -982,8 +1229,18 @@ function getPolygonVerts(node1,node2)
 function setScale(sc)
 {
     $("#zoomLabel").html(sc+"x");
+    $("#zoom").val(sc);
     scale = sc;    
+    ruler.generate();
+    ruler.draw();
     tree.scale(sc);
+
+    if(animationTimer == null)
+    {
+        drawBackground();
+        tree.draw();
+        ruler.draw();
+    }
 }
 
 
@@ -1013,7 +1270,36 @@ function resume()
 
 function restart()
 {
+    if(logActive)
+    {
+        
+        resultsLog.writeLine("Test #"+testNumber);
+        resultsLog.writeLine("---------------------");
+        resultsLog.writeLine("Width : " + Math.round(tree.apicalMeristem.size));
+        resultsLog.writeLine("Height : " + tree.getHeight());
+        resultsLog.writeLine("Max Branches: " + MAX_NODES);
+        resultsLog.writeLine("Shape: " + (shape * 100) + "% Curve");
+        resultsLog.writeLine("Water: " + (water * 100)+ "%");
+        resultsLog.writeLine("Sunlight: " + (sunlight * 100) + "%");
+        resultsLog.writeLine("");
+        testNumber++;
+    }
+    $("#pause").attr("value", "Pause");
+    $("#pause").attr("onclick", "pause()");
+
+    if(random)
+    {
+        let size = Math.round(Math.random() * (1000 - 10))+10;
+        let shape = Math.round(Math.random() * 100);
+        let water = Math.round(Math.random() * 100);
+        let sunlight = Math.round(Math.random() * 100);
+        setSize(size);
+        setShape(shape);
+        setWater(water);
+        setSunlight(sunlight);
+    }
     start();
+
 }
 
 
@@ -1026,14 +1312,20 @@ function setSpeed(speed)
         
         clearInterval(animationTimer);
         animationTimer = null;
+        FPS = speed;
+        if(animationTimer == undefined || animationTimer == null)
+        {
+            $("#speedLabel").html(speed+" fps");
+            animationTimer = setInterval(mainLoop, SEC_IN_MILISECONDS/FPS);
+        }
         
     }
-    FPS = speed;
-    if(animationTimer == undefined || animationTimer == null)
+    else
     {
+        FPS = speed;
         $("#speedLabel").html(speed+" fps");
-        animationTimer = setInterval(mainLoop, SEC_IN_MILISECONDS/FPS);
     }
+    
 
 }
 
@@ -1041,17 +1333,28 @@ function setSize(size)
 {
     //set max number of nodes?
     MAX_NODES = size;
-    $("#sizeLabel").html(size+ " nodes")
+    $("#sizeLabel").html(size+ " nodes");
+    $("#size").val(size);
 }
 
+function setShape(shapeAmnt)
+{
+    shape = shapeAmnt/100;
+    $("#shapeLabel").html((shapeAmnt)+"%");
+    $("#shape").val(shapeAmnt);
+}
 function setWater(waterAmnt)
 {
-    water = waterAmnt;
+    water = waterAmnt/100;
+    $("#waterLabel").html((waterAmnt)+"%");
+    $("#water").val(waterAmnt);
 }
 
 function setSunlight(sunAmnt)
 {
-    sunlight = sunAmnt;
+    sunlight = sunAmnt/100;
+    $("#sunlightLabel").html((sunAmnt)+"%");
+    $("#sunlight").val(sunAmnt);
 }
 
 
@@ -1076,6 +1379,47 @@ function setLeaves(val)
 }
 
 
+function setAutoRestart(val)
+{
+    auto = val;
+}
+
+function toggleRandom(val)
+{
+    random = val;
+}
+//speed
+function setControls()
+{
+    setSpeed($("#speed").val());
+    setSize($("#size").val());
+    setWater($("#water").val());
+    setShape($("#shape").val());
+    setSunlight($("#sunlight").val());
+    setLeaves($("#leaves").prop("checked"));
+
+    toggleWireframe( $("#wireframe").prop("checked"));
+
+    toggleLog( $("#log").prop("checked"));
+
+
+    setAutoRestart($("#auto").prop("checked"));
+
+    toggleRandom( $("#random").prop("checked"));
+    
+    $("#zoom").val(scale);
+    $("#zoomLabel").html(scale+"x");
+    
+   
+
+
+
+}
+
+function toggleLog(val)
+{
+    logActive = val;
+}
 function closeMenu()
 {
 
@@ -1092,4 +1436,20 @@ function openMenu()
     $("#arrow").attr("onclick", "closeMenu()");
     $("#arrowText").html("Close");
 }
+
+
+var colourObj = function()
+{
+    this.red = 0;
+    this.blue = 0;
+    this.green = 0;
+    this.alpha = 1.0;
+    
+    this.getString = function()
+    {
+        return "rgba("+this.red+","+this.green+","+this.blue+","+this.alpha+")";
+    
+    }
+
+};
 
