@@ -333,6 +333,11 @@ class Tree
             {
                 drawLine(this.nodes[n].offset,this.nodes[n].parent.offset);
                 drawCircle(this.nodes[n]);
+
+                if(this.nodes[n].highlighted)
+                {
+                    drawHighlight(this.nodes[n]);
+                }
             }
             else
             {
@@ -343,9 +348,28 @@ class Tree
         for(var g in this.ghosts)
         {
             drawLine(this.ghosts[g].offset,this.ghosts[g].parent.offset);
+
+            if(this.ghosts[g].highlighted)
+            {
+                drawHighlight(this.ghosts[g]);
+            }
             //drawCircle(this.ghosts[g]);
         }
 
+    }
+
+    cleanUp()
+    {
+        //How to I remove a branch??
+
+        /*
+            delete the branches children from the deleted node and the tree
+            Make sure the node left behind knows what it's new role is:
+                - if it was a bud, make it a branch
+                - if it was a branch, make it a bud
+                - meristems cant be directly cut.
+
+        */
     }
 
 
@@ -361,6 +385,9 @@ class Node
         {
             this.parent = parent; // the node that spawned this node  
         }   
+
+        
+        this.cutOrder = 0;
         this.x = x;
         this.y = y;
         this.size = size;
@@ -375,6 +402,7 @@ class Node
         this.tree = tree;
         this.health = 100;
         this.static = false;
+        this.highlighted = false;
         this.offset = {
             x: this.x,
             y: this.y,
@@ -678,46 +706,6 @@ class Node
 
         this.id = "Branch";
 
-
-
-
-        /*if(this.colour.red == 255 && this.colour.green == 0)
-        {
-            this.redToGreen = true;
-            this.greenToBlue = false;
-            this.blueToRed = false;
-        }
-        else if(this.colour.green == 255 && this.colour.blue == 0)
-        {
-            this.redToGreen = false;
-            this.greenToBlue = true;
-            this.blueToRed = false;
-        }
-        else if(this.colour.blue == 255 && this.colour.red == 0)
-        {
-            this.redToGreen = false;
-            this.greenToBlue = false;
-            this.blueToRed = true;
-        }
-
-        
-
-        if(this.redToGreen)
-        {
-            this.colour.red -= 1;
-            this.colour.green += 1;
-        }
-        else if(this.greenToBlue)
-        {
-            this.colour.green -= 1;
-            this.colour.blue += 1;
-        }
-        if(this.blueToRed)
-        {
-            this.colour.blue -= 1;
-            this.colour.red += 1;
-        }*/
-
         for(var i = 0; i < 2; i++)
         {
 
@@ -897,11 +885,6 @@ class Node
         }
         else if (this.id == "Meristem" || this.id == "ApicalMeristem" )
         {
-            /*if(this.gen%this.tree.nodes.length == 4 || this.gen%this.tree.nodes.length == 5)
-            {
-                children = this.branch();
-            }
-            */
             children = this.extend();
         }
         
@@ -911,6 +894,10 @@ class Node
     {
         this.static = true;
     }
+
+    
+
+    
 }
 
 
@@ -918,10 +905,116 @@ $(document).ready(function(){
     resultsLog = new log($("#logBox"));
     canvas = document.getElementById("myCanvas");
     context = canvas.getContext('2d');
+    //$(document).bind("mousedown", cutBranch);
+    //$(document).bind("mousemove", highlightBranch);
     start();
-})
+
+    
+});
 
 
+
+function cutBranch(e)
+{
+    var nodeClicked = false;
+    for(var n in tree.nodes)
+    {
+        if(e.originalEvent.clientX > (tree.nodes[n].offset.x - tree.nodes[n].offset.size)  && e.originalEvent.clientX < (tree.nodes[n].offset.x + tree.nodes[n].offset.size))
+        {
+            if(e.originalEvent.clientY > (tree.nodes[n].offset.y - tree.nodes[n].offset.size)  && e.originalEvent.clientY < (tree.nodes[n].offset.y + tree.nodes[n].offset.size))
+            {
+
+                pause();
+                tree.nodes[n].cut();
+                nodeClicked = true;
+                resume();
+                break;
+            }
+        }
+    
+    }
+
+    if(!nodeClicked)
+    {
+        for(var g in tree.ghosts)
+        {
+            if(e.originalEvent.clientX > (tree.ghosts[g].offset.x - tree.ghosts[g].offset.size)  && e.originalEvent.clientX < (tree.ghosts[g].offset.x + tree.ghosts[g].offset.size))
+            {
+                if(e.originalEvent.clientY > (tree.ghosts[g].offset.y - tree.ghosts[g].offset.size)  && e.originalEvent.clientY < (tree.ghosts[g].offset.y + tree.ghosts[g].offset.size))
+                {
+                    pause();
+                    tree.ghosts[g].cut();
+                    nodeClicked = true;
+                    resume();
+                    break;
+                }
+            }
+            
+        }
+    }
+
+    if(nodeClicked)
+    {
+        //tree.cleanUp();
+    }
+    
+}
+
+
+function highlightBranch(e)
+{
+    for(var n in tree.nodes)
+    {
+        if(e.originalEvent.clientX > (tree.nodes[n].offset.x - tree.nodes[n].offset.size)  && e.originalEvent.clientX < (tree.nodes[n].offset.x + tree.nodes[n].offset.size))
+        {
+            if(e.originalEvent.clientY > (tree.nodes[n].offset.y - tree.nodes[n].offset.size)  && e.originalEvent.clientY < (tree.nodes[n].offset.y + tree.nodes[n].offset.size))
+            {
+
+                tree.nodes[n].highlighted = true;
+                
+            }
+            else
+            {
+                tree.nodes[n].highlighted = false;
+                
+            }
+        }
+        else
+        {
+            tree.nodes[n].highlighted = false;
+            
+        }
+        
+    }
+
+
+    for(var g in tree.ghosts)
+    {
+        if(e.originalEvent.clientX > (tree.ghosts[g].offset.x - tree.ghosts[g].offset.size)  && e.originalEvent.clientX < (tree.ghosts[g].offset.x + tree.ghosts[g].offset.size))
+        {
+            if(e.originalEvent.clientY > (tree.ghosts[g].offset.y - tree.ghosts[g].offset.size)  && e.originalEvent.clientY < (tree.ghosts[g].offset.y + tree.ghosts[g].offset.size))
+            {
+
+                tree.ghosts[g].highlighted = true;
+                //pause();
+            }
+            else
+            {
+                tree.ghosts[g].highlighted = false;
+                
+            }
+        }
+        else
+        {
+            tree.ghosts[g].highlighted = false;
+            
+        }
+        
+    }
+
+
+
+}
 
 function start()
 {
@@ -1052,6 +1145,29 @@ function drawCircle(node1)
     context.arc(node1.offset.x,node1.offset.y,node1.offset.size,0,Math.PI*2,true)
     context.stroke();
     context.fill();
+
+}
+
+
+function drawHighlight(node1)
+{
+    
+   
+    context.strokeStyle = color;
+    context.fillStyle = "yellow";
+    context.beginPath();
+    
+    context.lineWidth = 7;
+    //draw arc
+    context.arc(node1.offset.x,node1.offset.y,node1.offset.size,0,Math.PI*2,true)
+    context.stroke();
+    context.fill();
+
+    var fontSize = 20 * scale;
+    context.strokeStyle = "white";
+    context.fillStyle = "white";
+    context.font = fontSize+"px Arial";
+    context.fillText(node1.id,node1.offset.x,node1.offset.y);
 
 }
 
@@ -1358,7 +1474,7 @@ function setSunlight(sunAmnt)
 }
 
 
-function setObsticles(val)
+function setObstacles(val)
 {
 
 }
