@@ -24,7 +24,7 @@
         <input type="button" value="Pause" id="pauseButton"/>
         <input type="button" value="Clear" id="clearButton" onclick="clearNodes()"/>
         <input type="checkbox" name="showIds" value="show" onchange="toggleIds(checked)"/>Show IDs
-        <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div>
+        <input type="range" name="speed" value=1 min=1 max=10 onchange="setSpeed(value)"/>Speed:<div id="speedLabel" style="display:inline;"></div><h3 style="display:inline; margin-left:20px; background-color: rgba(100,100,255,0.5);">Click to start a culture in the colour selected!</h3>
       </div>
       <!--<div style="left:auto; width:100%;right:auto;text-align:center;">
         <a href="#" onclick="openAdvanced()" style="display:inline;" id="advancedLink">Advanced Options</a>
@@ -38,6 +38,7 @@
       </div>-->
       
     </div>
+
     <canvas id="myCanvas" width = "auto" height="auto" style="padding-left: 0;
     padding-right: 0;
     margin-left: auto;
