@@ -1,0 +1,155 @@
+Spider Web Simulator
+--------------------
+
+- This is first and formost a simulator so getting spider behaviour right will be a main focus. 
+
+
+Notable Spider Facts:
+---------------------
+
+- 3 glands used for silk productions
+    - safty line for traversing webs
+    - sticky for trapping prey
+    - fine for wrapping prey
+- Web weaving takes a lot of energy in the form of silk protein
+- spiders will eat parts their own web daily for sustanance 
+- Over time, webs will lose their stickyness (maybe an opportunity for reconsumption?)
+- Most common spider species only have 6 eyes
+    - two in the front that "see" in the traditional senses
+    - the other 4 detect light and movement only 
+- spiders use tiny hairs on their body to detect movement and changes in the air
+- spider legs are made of 7 distince parts
+- spider will grab strands with it's legs and pull them closer togther to attach strands 
+    - video for detail: https://www.youtube.com/watch?v=4Y9K1H6Yn6o
+- the spider merely touches the adhesive thread to the anchor lines when contructing the adhesive layer
+- video example of spider leg movement: https://www.youtube.com/watch?v=7CxOPakRsSU
+
+
+Basic Web Construction Steps:
+------------------------------
+
+1. Webs start by first producing a fine adhesive thread to drift on a faint breeze across a gap. When it sticks to a surface at the far end, the spider feels the change in the vibration. The spider reels in and tightens the first strand, then carefully walks along it and strengthens it with a second thread. This process is repeated until the thread is strong enough to support the rest of the web.
+
+2. After strengthening the first thread, the spider continues to make a Y-shaped netting. The first three radials of the web are now constructed. More radials are added, making sure that the distance between each radial and the next is small enough to cross. This means that the number of radials in a web directly depends on the size of the spider plus the size of the web. It is common for a web to be about 20 times the size of the spider building it.
+
+3. After the radials are complete, the spider fortifies the center of the web with about five circular threads. It makes a spiral of non-sticky, widely spaced threads to enable it to move easily around its own web during construction, working from the inside outward.
+
+4. Beginning from the outside and moving inward, the spider methodically replaces this spiral with a more closely spaced one made of adhesive threads. It uses the initial radiating lines as well as the non-sticky spirals as guide lines. The spaces between each spiral and the next are directly proportional to the distance from the tip of its back legs to its spinners.  
+
+5. While the sticky spirals are formed, the non-adhesive spirals are removed as there is no need for them any more.
+
+6.After the spider has completed its web, it chews off the initial three center spiral threads then sits and waits. If the web is broken without any structural damage during the construction, the spider does not make any initial attempts to rectify the problem.
+
+Basic Hunting Process:
+----------------------
+
+1. The spider senses the impact and struggle of a prey animal by vibrations transmitted through the web.
+
+    NOTE: A spider positioned in the middle of the web makes for a highly visible prey for birds and other predators, even without web decorations; many day-hunting orb-web spinners reduce this risk by hiding at the edge of the web with one foot on a signal line from the hub or by appearing to be inedible or unappetizing.
+
+    NOTE: Spiders do not usually adhere to their own webs, because they are able to spin both sticky and non-sticky types of silk, and are careful to travel across only non-sticky portions of the web.
+
+2. The spider walks carefully on the non-sticky threads of the web to the prey
+
+3. The spider encases the prey in a fine silk 
+
+4. When consuming, the some spiders inject their prey with digestive enzymes, liquifying the internal organs. 
+
+5. They then suck the liquified matter from the prey, leaving the shell of the prey behind 
+
+
+
+Web Types:
+----------
+
+NOTE: Orb webs will likely be the best choice for a primarily 2D simulation
+
+- Spiral orb webs, associated primarily with the family Araneidae, as well as Tetragnathidae and Uloboridae[11]
+    - During the process of making an orb web, the spider will use its own body for measurements.
+
+
+3D web types:
+-------------
+- Tangle webs or cobwebs, associated with the family Theridiidae
+    - irregular, tangled, three-dimensional webs
+- Funnel webs, with associations divided into primitive and modern
+- Tubular webs, which run up the bases of trees or along the ground
+- Sheet webs
+
+
+Notable Orb Spider Types (considered for this sim):
+---------------------------------------------------
+
+- Argiope (garden spiders)
+- Cyclosa (garbage line spiders)
+- Neoscona 
+- Darwin's Bark Spider 
+    - sprays initial strands into the wind across a large expanse (approx 25 meters)
+
+
+
+
+Simulator Mode:
+---------------
+- A "spider" spins a web in a 2D space in a way that is similar to how it's done in nature 
+    - need to watch videos of spiders spinning webs to capture accurate movements and techniques
+- There are multiple types of spiders 
+- insects fly into the web
+    - Will need to find a way to spoof "depth"
+- spider will eat insects 
+- insects can put strain on the web, potentially breaking it
+- spider will use vibrations to detect caught insects
+
+Interactive Mode:
+-----------------
+
+- User can click to tell the spider where to go
+    - if an insect is clicked, the spider will go eat it
+- User can tell the spider where to build a strand of web
+    - Clicking to move and clicking to build will have to be different somehow
+        - Click and drag *favorite*
+        - A button to change modes 
+
+Maybes:
+-------
+- User can sever a web strand
+- User can unlock spiders to play as
+- User can gain power ups 
+- Full sprites with animation
+- Non HTML GUI (Not really needed, but it would be nice to try and keep everything in canvas)
+- Angular framework (Not really needed, but it could be a neat way of breaking up the app) 
+- Make it look *pretty* (nice gui, nice sprites, intuative interface etc);
+
+
+Architecture:
+-----------------
+
+- Spider
+    - Type 
+    - Health
+    - Stamina (maybe)
+    - State
+    - Legs 
+    - Spinners 
+    - Active Spinner
+    - func Build Web
+    - func StartThread
+    - func EndThread 
+    - func MoveToPoint
+    - func EatPrey
+    - func WrapPrey
+    - func Listen
+    - 
+
+- Web
+    - ThreadList
+    - func RemoveStrand
+    - func AddStrand
+
+Thread 
+    - Points (start and end)
+    - Health
+    - Type
+        - If I remember correctly, not all web strands are sticky. Spiders use special strands to move around the web
+    - func TakeDamage
+    - func Break 
